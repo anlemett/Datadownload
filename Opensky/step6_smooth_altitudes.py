@@ -1,16 +1,18 @@
 ##############################################################################
 
 #airport_icao = "ESSA"
-airport_icao = "ESGG"
-#airport_icao = "EIDW" # Dublin
+#airport_icao = "ESGG"
+airport_icao = "EIDW" # Dublin
 #airport_icao = "LOWW" # Vienna
+
+TMA_altitude_threshold = 8000 # might be different for different airports?
 
 arrival = True
 
-year = '2021'
+year = '2019'
 
 #months = ['01', '02', '03', '04', '05', '06', '07', '08', '09', '10', '11', '12']
-months = ['01', '02', '03']
+months = ['10']
 
 ##############################################################################
 
@@ -18,7 +20,8 @@ import os
 
 DATA_DIR = os.path.join("data", airport_icao)
 DATA_DIR = os.path.join(DATA_DIR, year)
-INPUT_DIR = os.path.join(DATA_DIR, "osn_" + airport_icao + "_states_TMA_raw_" + year)
+#INPUT_DIR = os.path.join(DATA_DIR, "osn_" + airport_icao + "_states_TMA_raw_" + year)
+INPUT_DIR = os.path.join(DATA_DIR, "osn_" + airport_icao + "_states_TMA_" + year)
 OUTPUT_DIR = os.path.join(DATA_DIR, "osn_" + airport_icao + "_states_TMA_" + year)
 
 if not os.path.exists(INPUT_DIR):
@@ -46,17 +49,22 @@ for month in months:
         
         print(airport_icao, year, month, week+1)
         
-        filename = 'osn_' + airport_icao + '_states_TMA_raw_' + year + '_' + month + '_week' + str(week + 1) + '.csv'
+        #filename = 'osn_' + airport_icao + '_states_TMA_raw_' + year + '_' + month + '_week' + str(week + 1) + '.csv'
+        filename = 'osn_' + airport_icao + '_states_TMA_' + year + '_' + month + '_week' + str(week + 1) + '.csv'
         if not arrival:
             filename = 'departure_' + filename
         
         full_filename = os.path.join(INPUT_DIR, filename)
         
         
-        df = pd.read_csv(full_filename, sep=' ',
-                                 names = ['flightId', 'sequence', 'timestamp', 'lat', 'lon', 'rawAltitude', 'velocity', 'endDate'],
-                                 dtype={'sequence':int, 'timestamp':int, 'altitude':int, 'endDate':str})
+        #df = pd.read_csv(full_filename, sep=' ',
+        #                         names = ['flightId', 'sequence', 'timestamp', 'lat', 'lon', 'rawAltitude', 'velocity', 'endDate'],
+        #                         dtype={'sequence':int, 'timestamp':int, 'altitude':int, 'endDate':str})
         
+        df = pd.read_csv(full_filename, sep=' ',
+                                 names = ['flightId', 'sequence', 'timestamp', 'lat', 'lon', 'rawAltitude', 'altitude', 'velocity', 'endDate'],
+                                 dtype={'sequence':int, 'timestamp':int, 'rawAltitude':int, 'altitude':float, 'endDate':str})
+
         #df = df[df["altitude"]>final_approach_altitude]
 
         new_df = pd.DataFrame(columns=['flightId', 'sequence', 'timestamp', 'lat', 'lon', 'rawAltitude', 'altitude',
@@ -87,19 +95,28 @@ for month in months:
             #flight_states_df =flight_states_df.sort_index(level=['sequence'], ascending = False)
             
             if not flight_states_df.empty:
-
+                
                 opensky_states_altitudes = []
                 opensky_states_times = []
                 opensky_states_fixed_altitudes = []
-
-                t = 0
-                prev_altitude = list(flight_states_df['rawAltitude'])[0] # Caution: if first altitude is wrong (fluctuation), it will break
-                                                                         # the whhole trajectory
+                
+                i = 0
+                
+                prev_altitude = list(flight_states_df['rawAltitude'])[i]
+                
+                while (prev_altitude==0) or (prev_altitude > TMA_altitude_threshold): #fluctuation
+                    i = i + 1
+                    prev_altitude = list(flight_states_df['rawAltitude'])[i]
+                
+                ii = i
+                while i>0:
+                    i = i - 1
+                    opensky_states_fixed_altitudes.append(prev_altitude)
                 
                 for seq, row in flight_states_df.iterrows():
                     
-                    t = t + 1
-                    opensky_states_times.append(t)
+                    if seq < ii:
+                        continue
                     
                     opensky_states_altitudes.append(row['rawAltitude'])
                     
@@ -137,6 +154,7 @@ for month in months:
         
         
         filename = 'osn_' + airport_icao + '_states_TMA_' + year + '_' + month + '_week' + str(week + 1) + '.csv'
+
         if not arrival:
             filename = 'departure_' + filename
         

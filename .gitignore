@@ -1,0 +1,12 @@
+__pycache__/
+*.csv
+*.txt
+*.nc
+*.png
+*.iml
+*/data/*
+.*
+LFV/*
+/Opensky/opensky_credentials.py
+!/.gitignore
+
