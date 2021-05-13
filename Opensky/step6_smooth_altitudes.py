@@ -2,8 +2,8 @@
 
 #airport_icao = "ESSA"
 #airport_icao = "ESGG"
-airport_icao = "EIDW" # Dublin
-#airport_icao = "LOWW" # Vienna
+#airport_icao = "EIDW" # Dublin
+airport_icao = "LOWW" # Vienna
 
 TMA_altitude_threshold = 8000 # might be different for different airports?
 
@@ -12,9 +12,11 @@ arrival = True
 year = '2019'
 
 #months = ['01', '02', '03', '04', '05', '06', '07', '08', '09', '10', '11', '12']
+#months = ['09', '11', '12']
 months = ['10']
 
 ##############################################################################
+
 
 import os
 
@@ -46,7 +48,7 @@ for month in months:
     number_of_weeks = (5, 4)[month == '02' and not calendar.isleap(int(year))]
         
     for week in range(0, number_of_weeks):
-        
+    
         print(airport_icao, year, month, week+1)
         
         #filename = 'osn_' + airport_icao + '_states_TMA_raw_' + year + '_' + month + '_week' + str(week + 1) + '.csv'
@@ -65,7 +67,6 @@ for month in months:
                                  names = ['flightId', 'sequence', 'timestamp', 'lat', 'lon', 'rawAltitude', 'altitude', 'velocity', 'endDate'],
                                  dtype={'sequence':int, 'timestamp':int, 'rawAltitude':int, 'altitude':float, 'endDate':str})
 
-        #df = df[df["altitude"]>final_approach_altitude]
 
         new_df = pd.DataFrame(columns=['flightId', 'sequence', 'timestamp', 'lat', 'lon', 'rawAltitude', 'altitude',
                                        'velocity', 'endDate'],
@@ -79,20 +80,25 @@ for month in months:
         for flight_id, flight_id_group in df.groupby(level='flightId'):
             
             count = count + 1
+            
             print(airport_icao, year, month, week+1, flight_id_num, count, flight_id)
+            
+            below_TMA_altitude_threshold_df = flight_id_group[flight_id_group['rawAltitude'] < TMA_altitude_threshold]
+            
+            if below_TMA_altitude_threshold_df.empty:    #flight is not landing
+                continue
             
             flight_states_df = flight_id_group.copy()
             #flight_states_df = df.loc[(flight_id, ), :]
             
-            # PHASE 1 Substitute big fluctuations with neigbor values
+            # PHASE 1 Substitute big fluctuations with neighbor values
             
-            altitude_fluctuation_threshold = 1000 # todo? make different thresholds for up and down fluctuations (up < down)
+            altitude_fluctuation_threshold_up = 500
+            altitude_fluctuation_threshold_down = 1000
             
             flight_states_df.reset_index(drop = False, inplace = True)
             df_len = len(flight_states_df)
             flight_states_df.set_index('sequence', inplace=True)
-            
-            #flight_states_df =flight_states_df.sort_index(level=['sequence'], ascending = False)
             
             if not flight_states_df.empty:
                 
@@ -120,7 +126,11 @@ for month in months:
                     
                     opensky_states_altitudes.append(row['rawAltitude'])
                     
-                    if abs(row['rawAltitude'] - prev_altitude) > altitude_fluctuation_threshold:
+                    if (row['rawAltitude'] < prev_altitude) & (prev_altitude-row['rawAltitude'] > altitude_fluctuation_threshold_down):
+                        opensky_states_fixed_altitudes.append(prev_altitude)
+                        continue
+                   
+                    if (row['rawAltitude'] > prev_altitude) & (row['rawAltitude'] - prev_altitude > altitude_fluctuation_threshold_up):
                         opensky_states_fixed_altitudes.append(prev_altitude)
                         continue
                     
