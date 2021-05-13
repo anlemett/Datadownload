@@ -83,7 +83,7 @@ for month in months:
             
             print(airport_icao, year, month, week+1, flight_id_num, count, flight_id)
             
-            below_TMA_altitude_threshold_df = flight_id_group[flight_id_group['rawAltitude'] < TMA_altitude_threshold]
+            below_TMA_altitude_threshold_df = flight_id_group[(flight_id_group['rawAltitude'] > 0) & (flight_id_group['rawAltitude'] < TMA_altitude_threshold)]
             
             if below_TMA_altitude_threshold_df.empty:    #flight is not landing
                 continue
