@@ -12,11 +12,18 @@ arrival = True
 year = '2019'
 
 #months = ['01', '02', '03', '04', '05', '06', '07', '08', '09', '10', '11', '12']
-#months = ['09', '11', '12']
 months = ['10']
 
 ##############################################################################
 
+if airport_icao == "ESSA":
+    TMA_altitude_threshold = 8000 #TODO: check
+elif airport_icao == "ESGG":
+    TMA_altitude_threshold = 8000 #TODO: check
+elif airport_icao == "EIDW":
+    TMA_altitude_threshold = 9000
+elif airport_icao == "LOWW":
+    TMA_altitude_threshold = 6000
 
 import os
 
