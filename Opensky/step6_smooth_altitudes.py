@@ -2,10 +2,8 @@
 
 #airport_icao = "ESSA"
 #airport_icao = "ESGG"
-#airport_icao = "EIDW" # Dublin
-airport_icao = "LOWW" # Vienna
-
-TMA_altitude_threshold = 8000 # might be different for different airports?
+airport_icao = "EIDW" # Dublin
+#airport_icao = "LOWW" # Vienna
 
 arrival = True
 
@@ -15,15 +13,26 @@ year = '2019'
 months = ['10']
 
 ##############################################################################
+# maximum alitude (ceiling) arrival aircraft enter the TMA
+# needed to determine altitude fluctuation at the first point
+TMA_altitude_threshold = 9000
 
-if airport_icao == "ESSA":
+# Alternative solution - make it different for diferent airports
+# If TMA_altitude_threshold is too big, the fluctuation at first point might be treated as the normal altitude, then the next normal
+# altitude is considered as fluctuation, as a result we get wrong vertical profile (horizontal line). The flight might be filtered out
+# using the last point altitude.
+# If TMA_altitude_threshold is too small, the normal (big) altitude might be treated as fluctuation, then the first altitude below
+# the threshold is treated as the normal one, as a resutl we get fake level for all altitudes above the threshold.
+# For statistics the first approach is better.
+
+'''if airport_icao == "ESSA":
     TMA_altitude_threshold = 8000 #TODO: check
 elif airport_icao == "ESGG":
     TMA_altitude_threshold = 8000 #TODO: check
 elif airport_icao == "EIDW":
     TMA_altitude_threshold = 9000
 elif airport_icao == "LOWW":
-    TMA_altitude_threshold = 6000
+    TMA_altitude_threshold = 6000'''
 
 import os
 
