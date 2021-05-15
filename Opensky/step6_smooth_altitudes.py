@@ -25,6 +25,8 @@ TMA_altitude_threshold = 9000
 # the threshold is treated as the normal one, as a resutl we get fake level for all altitudes above the threshold.
 # For statistics the first approach is better.
 
+# Fake levels still possible due to fluctuation down at the first point
+
 '''if airport_icao == "ESSA":
     TMA_altitude_threshold = 8000 #TODO: check
 elif airport_icao == "ESGG":
@@ -42,9 +44,6 @@ DATA_DIR = os.path.join(DATA_DIR, year)
 INPUT_DIR = os.path.join(DATA_DIR, "osn_" + airport_icao + "_states_TMA_" + year)
 OUTPUT_DIR = os.path.join(DATA_DIR, "osn_" + airport_icao + "_states_TMA_" + year)
 
-if not os.path.exists(INPUT_DIR):
-    os.makedirs(INPUT_DIR)
-    
 if not os.path.exists(OUTPUT_DIR):
     os.makedirs(OUTPUT_DIR)
 
