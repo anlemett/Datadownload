@@ -1,9 +1,9 @@
 ##############################################################################
 
-#airport_icao = "ESSA"
+airport_icao = "ESSA"
 #airport_icao = "ESGG"
 #airport_icao = "EIDW" # Dublin
-airport_icao = "LOWW" # Vienna
+#airport_icao = "LOWW" # Vienna
 
 arrival = True
 

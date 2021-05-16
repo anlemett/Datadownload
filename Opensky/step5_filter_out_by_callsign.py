@@ -2,8 +2,8 @@
 
 #airport_icao = "ESSA"
 #airport_icao = "ESGG"
-#airport_icao = "EIDW" # Dublin
-airport_icao = "LOWW" # Vienna
+airport_icao = "EIDW" # Dublin
+#airport_icao = "LOWW" # Vienna
 
 arrival = True
 
@@ -124,8 +124,8 @@ for month in months:
         
         df = df.drop('callsign', 1)
         
-        filename = 'osn_' + airport_icao + '_states_TMA_raw_' + year + '_' + month + '_week' + str(week + 1) + '.csv'
-        #filename = 'osn_' + airport_icao + '_states_TMA_' + year + '_' + month + '_week' + str(week + 1) + '_test.csv'
+        #filename = 'osn_' + airport_icao + '_states_TMA_raw_' + year + '_' + month + '_week' + str(week + 1) + '.csv'
+        filename = 'osn_' + airport_icao + '_states_TMA_' + year + '_' + month + '_week' + str(week + 1) + '.csv'
         if not arrival:
             filename = 'departure_' + filename
         
