@@ -5,8 +5,6 @@
 airport_icao = "EIDW" # Dublin
 #airport_icao = "LOWW" # Vienna
 
-arrival = True
-
 year = '2019'
 
 #months = ['01', '02', '03', '04', '05', '06', '07', '08', '09', '10', '11', '12']
@@ -17,20 +15,37 @@ months = ['10']
 # needed to determine altitude fluctuation at the first point
 TMA_altitude_threshold = 9000
 
-# Alternative solution - make it different for diferent airports
+# Alternative solution - make TMA_altitude_threshold different for diferent airports
 # If TMA_altitude_threshold is too big, the fluctuation at first point might be treated as the normal altitude, then the next normal
 # altitude is considered as fluctuation, as a result we get wrong vertical profile (horizontal line). The flight might be filtered out
-# using the last point altitude.
+# using the last point altitude (next step).
 # If TMA_altitude_threshold is too small, the normal (big) altitude might be treated as fluctuation, then the first altitude below
-# the threshold is treated as the normal one, as a resutl we get fake level for all altitudes above the threshold.
+# the threshold is treated as the normal one, as a result we get fake level for all altitudes above the threshold.
 # For statistics the first approach is better.
 
-# Fake levels still possible due to fluctuation down at the first point
+# Fake levels are still possible due to fluctuation down at the first point (not filtered out).
+
+# threshold for altitude fluctuation toward bigger values
+altitude_fluctuation_threshold_up = 300 # ?
+
+# If altitude_fluctuation_threshold_up is too big a lot of fluctuations will be skiped (then vertical profile is changed greatly by 
+# smoothing procedure).
+# Too small value might cause a fake level but in very rare cases: wrong altitude for some time (the same altitude) and then the aircraft
+# really goes up.
+
+# threshold for altitude fluctuation toward smaller values
+altitude_fluctuation_threshold_down = 600
+
+# If altitude_fluctuation_threshold_down is too big  a lot of fluctuations will be skiped (then vertical profile is changed greatly by 
+# smoothing procedure).
+# Too small value might cause a fake level in the following cases: wrong altitude data for some time (the same altitude), then correct
+# altitude, but the difference between this altittude and the previous correct altitude is above the fluctuation down threshold. Flights 
+# of this kind are also filtered out using the last point altitude (next step).
 
 '''if airport_icao == "ESSA":
-    TMA_altitude_threshold = 8000 #TODO: check
+    TMA_altitude_threshold = 8000 # ?
 elif airport_icao == "ESGG":
-    TMA_altitude_threshold = 8000 #TODO: check
+    TMA_altitude_threshold = 8000 # ?
 elif airport_icao == "EIDW":
     TMA_altitude_threshold = 9000
 elif airport_icao == "LOWW":
@@ -68,8 +83,6 @@ for month in months:
         
         #filename = 'osn_' + airport_icao + '_states_TMA_raw_' + year + '_' + month + '_week' + str(week + 1) + '.csv'
         filename = 'osn_' + airport_icao + '_states_TMA_' + year + '_' + month + '_week' + str(week + 1) + '.csv'
-        if not arrival:
-            filename = 'departure_' + filename
         
         full_filename = os.path.join(INPUT_DIR, filename)
         
@@ -83,8 +96,7 @@ for month in months:
                                  dtype={'sequence':int, 'timestamp':int, 'rawAltitude':int, 'altitude':float, 'endDate':str})
 
 
-        new_df = pd.DataFrame(columns=['flightId', 'sequence', 'timestamp', 'lat', 'lon', 'rawAltitude', 'altitude',
-                                       'velocity', 'endDate'],
+        new_df = pd.DataFrame(columns=['flightId', 'sequence', 'timestamp', 'lat', 'lon', 'rawAltitude', 'altitude', 'velocity', 'endDate'],
                               dtype=str)
 
         df.set_index(['flightId', 'sequence'], inplace = True)
@@ -107,9 +119,6 @@ for month in months:
             #flight_states_df = df.loc[(flight_id, ), :]
             
             # PHASE 1 Substitute big fluctuations with neighbor values
-            
-            altitude_fluctuation_threshold_up = 500
-            altitude_fluctuation_threshold_down = 1000
             
             flight_states_df.reset_index(drop = False, inplace = True)
             df_len = len(flight_states_df)
@@ -179,13 +188,9 @@ for month in months:
         
         
         filename = 'osn_' + airport_icao + '_states_TMA_' + year + '_' + month + '_week' + str(week + 1) + '.csv'
-
-        if not arrival:
-            filename = 'departure_' + filename
         
         full_filename = os.path.join(OUTPUT_DIR, filename)
         
-        new_df.to_csv(full_filename, sep=' ', encoding='utf-8', float_format='%.3f', header=False, index=False)
+        new_df.to_csv(full_filename, sep=' ', encoding='utf-8', float_format='%.6f', header=False, index=False)
 
 print((time.time()-start_time)/60)
-

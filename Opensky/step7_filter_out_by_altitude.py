@@ -52,8 +52,7 @@ for month in months:
                                  dtype={'sequence':int, 'timestamp':int, 'rawAltitude':int, 'altitude':float, 'endDate':str})
         
         
-        new_df = pd.DataFrame(columns=['flightId', 'sequence', 'timestamp', 'lat', 'lon', 'rawAltitude', 'altitude',
-                                       'velocity', 'endDate'],
+        new_df = pd.DataFrame(columns=['flightId', 'sequence', 'timestamp', 'lat', 'lon', 'rawAltitude', 'altitude', 'velocity', 'endDate'],
                               dtype=str)
         
         df.set_index(['flightId', 'sequence'], inplace = True)
@@ -92,6 +91,6 @@ for month in months:
 
         full_filename = os.path.join(OUTPUT_DIR, filename)
         
-        df.to_csv(full_filename, sep=' ', encoding='utf-8', float_format='%.3f', header=False, index=True)
+        df.to_csv(full_filename, sep=' ', encoding='utf-8', float_format='%.6f', header=False, index=True)
 
 print((time.time()-start_time)/60)

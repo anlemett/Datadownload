@@ -12,6 +12,11 @@ months = ['10']
 
 ##############################################################################
 
+# Threshold for lat/lon fluctuattion
+# If the threshold is too big, small fluctuations will be skiped
+# If the threshold is too small, the real value might be treated as fluctuation, hence the whole trajectory is messed up
+threshold = 0.5
+
 import os
 
 DATA_DIR = os.path.join("data", airport_icao)
@@ -52,7 +57,7 @@ for month in months:
         flight_id_num = len(df.groupby(level='flightId'))
         
         new_df = pd.DataFrame(columns=['flightId', 'sequence', 'timestamp', 'lat', 'lon', 'rawAltitude', 'altitude', 'velocity', 'endDate'],
-                              dtype={'sequence':int, 'timestamp':int, 'rawAltitude':int, 'altitude':float, 'endDate':str})
+                              dtype=str)
 
         count = 0
 
@@ -62,34 +67,33 @@ for month in months:
             print(airport_icao, year, month, week+1, flight_id_num, count, flight_id)
             
             flight_states_df = flight_id_group.copy()
-            threshold = 0.1
             
-            df_len = len(flight_states_df)
-            flight_states_df.set_index('sequence', inplace=True)
+            number_of_points = len(flight_states_df)
             
             if not flight_states_df.empty:
                 
                 lats = list(flight_id_group['lat'])
                 
-                number_of_points = len(lats)
-                
                 #first lat (correct as it is inside TMA):
                 prev_lat = lats[0]
                 
-                for i in range(0, number_of_points-1):
+                for i in range(1, number_of_points): # 191001AAL724 809 
                     
-                    next_lat = lats[i+1]
+                    shift = 0
+                    while ((i+shift < number_of_points) and (abs(abs(lats[i+shift]) - abs (prev_lat)) > threshold)):
+                        
+                        shift = shift + 1
                     
-                    while (lats[i]==0) | (abs(abs(lats[i]) - abs (prev_lat)) > threshold):
-                        
-                        lats[i] = (next_lat + prev_lat)/2
-                        next_lat = lats[i]
-                        
+                    if (i+shift < number_of_points):
+                        while (shift > 0):
+                            next_lat = lats[i+shift]
+                            shift = shift - 1
+                            lats[i+shift] = (next_lat + prev_lat)/2
+                    else:
+                        while (shift > 0):
+                            shift = shift - 1
+                            lats[i+shift] = prev_lat
                     prev_lat = lats[i]
-                    
-                #last lat:
-                if (lats[number_of_points-1]==0) | (abs(abs(lats[number_of_points-1]) - abs (lats[number_of_points-2])) > threshold):
-                    lats[number_of_points-1] = lats[number_of_points-2]
                 
                 
                 lons = list(flight_id_group['lon'])
@@ -97,26 +101,28 @@ for month in months:
                 #first lon (correct as it is inside TMA):
                 prev_lon = lons[0]
                 
-                for i in range(0, number_of_points-1):
+                for i in range(1, number_of_points):
                     
-                    next_lon = lons[i+1]
+                    shift = 0
+                    while ((i+shift < number_of_points) and (abs(abs(lons[i+shift]) - abs (prev_lon)) > threshold)):
+                        
+                        shift = shift + 1
                     
-                    while (lons[i]==0) | (abs(abs(lons[i]) - abs (prev_lon)) > threshold):
-                        
-                        lons[i] = (next_lon + prev_lon)/2
-                        next_lon = lons[i]
-                        
+                    if (i+shift < number_of_points):
+                        while (shift > 0):
+                            next_lon = lons[i+shift]
+                            shift = shift - 1
+                            lons[i+shift] = (next_lon + prev_lon)/2
+                    else:
+                        while (shift > 0):
+                            shift = shift - 1
+                            lons[i+shift] = prev_lon
                     prev_lon = lons[i]
-                    
-                #last lon:
-                if (lons[number_of_points-1]==0) | (abs(abs(lons[number_of_points-1]) - abs (lons[number_of_points-2])) > threshold):
-                    lons[number_of_points-1] = lons[number_of_points-2]
                     
                 flight_states_df["lat"] = lats
                 flight_states_df["lon"] = lons
 
             flight_states_df.reset_index(drop = False, inplace = True)
-            flight_states_df.set_index(['flightId', 'sequence'], inplace=True)
             flight_states_df = flight_states_df[['flightId', 'sequence', 'timestamp', 'lat', 'lon', 'rawAltitude', 'altitude', 'velocity', 'endDate']]
             
             new_df = new_df.append(flight_states_df)
@@ -125,6 +131,6 @@ for month in months:
 
         full_filename = os.path.join(OUTPUT_DIR, filename)
         
-        new_df.to_csv(full_filename, sep=' ', encoding='utf-8', float_format='%.3f', header=False, index=True)
+        new_df.to_csv(full_filename, sep=' ', encoding='utf-8', float_format='%.6f', header=False, index=False)
 
 print((time.time()-start_time)/60)

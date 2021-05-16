@@ -257,7 +257,7 @@ def download_states_week(month, week):
         
         new_states_df = new_states_df.append(new_flight_df)
         
-    new_states_df.to_csv(os.path.join(OUTPUT_DIR, opensky_states_filename), sep=' ', encoding='utf-8', float_format='%.3f', header=None, index = True)
+    new_states_df.to_csv(os.path.join(OUTPUT_DIR, opensky_states_filename), sep=' ', encoding='utf-8', float_format='%.6f', header=None, index = True)
     
     closeConnection(client, shell)
 
