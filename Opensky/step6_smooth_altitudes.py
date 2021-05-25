@@ -1,14 +1,14 @@
 ##############################################################################
 
-#airport_icao = "ESSA"
+airport_icao = "ESSA"
 #airport_icao = "ESGG"
-airport_icao = "EIDW" # Dublin
+#airport_icao = "EIDW" # Dublin
 #airport_icao = "LOWW" # Vienna
 
 year = '2019'
 
-#months = ['01', '02', '03', '04', '05', '06', '07', '08', '09', '10', '11', '12']
-months = ['10']
+months = ['01', '02', '03', '04', '05', '06', '07', '08', '09', '10', '11', '12']
+#months = ['10']
 
 ##############################################################################
 # maximum alitude (ceiling) arrival aircraft enter the TMA

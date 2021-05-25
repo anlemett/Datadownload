@@ -1,14 +1,14 @@
 ##############################################################################
 
-#airport_icao = "ESSA"
+airport_icao = "ESSA"
 #airport_icao = "ESGG"
-airport_icao = "EIDW" # Dublin
+#airport_icao = "EIDW" # Dublin
 #airport_icao = "LOWW" # Vienna
 
 year = '2019'
 
-#months = ['01', '02', '03', '04', '05', '06', '07', '08', '09', '10', '11', '12']
-months = ['10']
+months = ['01', '02', '03', '04', '05', '06', '07', '08', '09', '10', '11', '12']
+#months = ['10']
 
 ##############################################################################
 
@@ -80,15 +80,17 @@ for month in months:
                 for i in range(1, number_of_points): # 191001AAL724 809 
                     
                     shift = 0
-                    while ((i+shift < number_of_points) and (abs(abs(lats[i+shift]) - abs (prev_lat)) > threshold)):
+                    lats_dif = abs(abs(lats[i+shift]) - abs (prev_lat))
+                    while ((i+shift < number_of_points) and ((lats_dif > threshold) or (lats_dif == 0))):
                         
                         shift = shift + 1
                     
                     if (i+shift < number_of_points):
+                        lats_step = (lats[i+shift] - prev_lat)/shift
                         while (shift > 0):
                             next_lat = lats[i+shift]
                             shift = shift - 1
-                            lats[i+shift] = (next_lat + prev_lat)/2
+                            lats[i+shift] = next_lat - lats_step
                     else:
                         while (shift > 0):
                             shift = shift - 1
@@ -104,15 +106,17 @@ for month in months:
                 for i in range(1, number_of_points):
                     
                     shift = 0
-                    while ((i+shift < number_of_points) and (abs(abs(lons[i+shift]) - abs (prev_lon)) > threshold)):
+                    lons_dif = abs(abs(lons[i+shift]) - abs (prev_lon))
+                    while ((i+shift < number_of_points) and ((lons_dif > threshold) or (lons_dif == 0))):
                         
                         shift = shift + 1
                     
                     if (i+shift < number_of_points):
+                        lons_step = (lons[i+shift] - prev_lon)/shift
                         while (shift > 0):
                             next_lon = lons[i+shift]
                             shift = shift - 1
-                            lons[i+shift] = (next_lon + prev_lon)/2
+                            lons[i+shift] = next_lon - lons_step
                     else:
                         while (shift > 0):
                             shift = shift - 1

@@ -1,14 +1,14 @@
 ##############################################################################
 
-#airport_icao = "ESSA"
+airport_icao = "ESSA"
 #airport_icao = "ESGG"
-airport_icao = "EIDW" # Dublin
+#airport_icao = "EIDW" # Dublin
 #airport_icao = "LOWW" # Vienna
 
 year = '2019'
 
-#months = ['01', '02', '03', '04', '05', '06', '07', '08', '09', '10', '11', '12']
-months = ['10']
+months = ['01', '02', '03', '04', '05', '06', '07', '08', '09', '10', '11', '12']
+#months = ['10']
 
 ##############################################################################
 
@@ -109,6 +109,6 @@ for month in months:
 
         full_filename = os.path.join(OUTPUT_DIR, filename)
         
-        df.to_csv(full_filename, sep=' ', encoding='utf-8', float_format='%.3f', header=False, index=True)
+        df.to_csv(full_filename, sep=' ', encoding='utf-8', float_format='%.6f', header=False, index=True)
 
 print((time.time()-start_time)/60)
