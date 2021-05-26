@@ -1,14 +1,14 @@
 ##############################################################################
 
-airport_icao = "ESSA"
-#airport_icao = "ESGG"
+#airport_icao = "ESSA"
+airport_icao = "ESGG"
 #airport_icao = "EIDW" # Dublin
 #airport_icao = "LOWW" # Vienna
 
 year = '2019'
 
-months = ['01', '02', '03', '04', '05', '06', '07', '08', '09', '10', '11', '12']
-#months = ['10']
+#months = ['01', '02', '03', '04', '05', '06', '07', '08', '09', '10', '11', '12']
+months = ['02']
 
 ##############################################################################
 # maximum alitude (ceiling) arrival aircraft enter the TMA
@@ -55,8 +55,8 @@ import os
 
 DATA_DIR = os.path.join("data", airport_icao)
 DATA_DIR = os.path.join(DATA_DIR, year)
-#INPUT_DIR = os.path.join(DATA_DIR, "osn_" + airport_icao + "_states_TMA_raw_" + year)
-INPUT_DIR = os.path.join(DATA_DIR, "osn_" + airport_icao + "_states_TMA_" + year)
+INPUT_DIR = os.path.join(DATA_DIR, "osn_" + airport_icao + "_states_TMA_raw_" + year)
+#INPUT_DIR = os.path.join(DATA_DIR, "osn_" + airport_icao + "_states_TMA_" + year)
 OUTPUT_DIR = os.path.join(DATA_DIR, "osn_" + airport_icao + "_states_TMA_" + year)
 
 if not os.path.exists(OUTPUT_DIR):
@@ -81,25 +81,31 @@ for month in months:
     
         print(airport_icao, year, month, week+1)
         
-        #filename = 'osn_' + airport_icao + '_states_TMA_raw_' + year + '_' + month + '_week' + str(week + 1) + '.csv'
-        filename = 'osn_' + airport_icao + '_states_TMA_' + year + '_' + month + '_week' + str(week + 1) + '.csv'
+        filename = 'osn_' + airport_icao + '_states_TMA_raw_' + year + '_' + month + '_week' + str(week + 1) + '.csv'
+        #filename = 'osn_' + airport_icao + '_states_TMA_' + year + '_' + month + '_week' + str(week + 1) + '.csv'
         
         full_filename = os.path.join(INPUT_DIR, filename)
         
         
-        #df = pd.read_csv(full_filename, sep=' ',
-        #                         names = ['flightId', 'sequence', 'timestamp', 'lat', 'lon', 'rawAltitude', 'velocity', 'endDate'],
-        #                         dtype={'sequence':int, 'timestamp':int, 'altitude':int, 'endDate':str})
-        
         df = pd.read_csv(full_filename, sep=' ',
-                                 names = ['flightId', 'sequence', 'timestamp', 'lat', 'lon', 'rawAltitude', 'altitude', 'velocity', 'endDate'],
-                                 dtype={'sequence':int, 'timestamp':int, 'rawAltitude':int, 'altitude':float, 'endDate':str})
+                                 names = ['flightId', 'sequence', 'timestamp', 'lat', 'lon', 'rawAltitude', 'velocity', 'endDate'],
+                                 index_col=False,
+                                 dtype={'sequence':int, 'timestamp':int, 'rawAltitude':float, 'endDate':str})
+        
+        #print(df.head(1))
+        
+        #df = pd.read_csv(full_filename, sep=' ',
+        #                         names = ['flightId', 'sequence', 'timestamp', 'lat', 'lon', 'rawAltitude', 'altitude', 'velocity', 'endDate'],
+        #                         index_col=False,
+        #                         dtype={'sequence':int, 'timestamp':int, 'rawAltitude':int, 'altitude':float, 'endDate':str})
 
 
         new_df = pd.DataFrame(columns=['flightId', 'sequence', 'timestamp', 'lat', 'lon', 'rawAltitude', 'altitude', 'velocity', 'endDate'],
                               dtype=str)
 
         df.set_index(['flightId', 'sequence'], inplace = True)
+        
+        #print(df.head(1))
 
         flight_id_num = len(df.groupby(level='flightId'))
         count = 0

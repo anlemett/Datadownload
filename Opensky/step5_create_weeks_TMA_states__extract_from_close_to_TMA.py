@@ -1,16 +1,16 @@
 ##############################################################################
 
 #airport_icao = "ESSA"
-#airport_icao = "ESGG"
+airport_icao = "ESGG"
 #airport_icao = "EIDW" # Dublin
-airport_icao = "LOWW" # Vienna
+#airport_icao = "LOWW" # Vienna
 
 arrival = True
 
 year = '2019'
 
 #months = ['01', '02', '03', '04', '05', '06', '07', '08', '09', '10', '11', '12']
-months = ['10']
+months = ['02']
 
 ##############################################################################
 
@@ -18,7 +18,7 @@ import os
 
 DATA_DIR = os.path.join("data", airport_icao)
 DATA_DIR = os.path.join(DATA_DIR, year)
-INPUT_DIR = os.path.join(DATA_DIR, "osn_" + airport_icao + "_states_close_to_TMA_" + year)
+INPUT_DIR = os.path.join(DATA_DIR, "osn_" + airport_icao + "_states_close_to_TMA_fixed_lat_lon_" + year)
 OUTPUT_DIR = os.path.join(DATA_DIR, "osn_" + airport_icao + "_states_TMA_raw_" + year)
 
 if not os.path.exists(INPUT_DIR):

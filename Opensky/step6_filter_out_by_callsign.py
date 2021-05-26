@@ -1,7 +1,7 @@
 ##############################################################################
 
-airport_icao = "ESSA"
-#airport_icao = "ESGG"
+#airport_icao = "ESSA"
+airport_icao = "ESGG"
 #airport_icao = "EIDW" # Dublin
 #airport_icao = "LOWW" # Vienna
 
@@ -9,8 +9,8 @@ arrival = True
 
 year = '2019'
 
-months = ['01', '02', '03', '04', '05', '06', '07', '08', '09', '10', '11', '12']
-#months = ['10']
+#months = ['01', '02', '03', '04', '05', '06', '07', '08', '09', '10', '11', '12']
+months = ['02']
 
 ##############################################################################
 
@@ -18,8 +18,8 @@ import os
 
 DATA_DIR = os.path.join("data", airport_icao)
 DATA_DIR = os.path.join(DATA_DIR, year)
-#DATA_DIR = os.path.join(DATA_DIR, "osn_" + airport_icao + "_states_TMA_raw_" + year)
-DATA_DIR = os.path.join(DATA_DIR, "osn_" + airport_icao + "_states_TMA_" + year)
+DATA_DIR = os.path.join(DATA_DIR, "osn_" + airport_icao + "_states_TMA_raw_" + year)
+#DATA_DIR = os.path.join(DATA_DIR, "osn_" + airport_icao + "_states_TMA_" + year)
 
 if not os.path.exists(DATA_DIR):
     os.makedirs(DATA_DIR)
@@ -45,8 +45,8 @@ for month in months:
         
         print(airport_icao, year, month, week+1)
         
-        #filename = 'osn_' + airport_icao + '_states_TMA_raw_all_' + year + '_' + month + '_week' + str(week + 1) + '.csv'
-        filename = 'osn_' + airport_icao + '_states_TMA_' + year + '_' + month + '_week' + str(week + 1) + '.csv'
+        filename = 'osn_' + airport_icao + '_states_TMA_raw_all_' + year + '_' + month + '_week' + str(week + 1) + '.csv'
+        #filename = 'osn_' + airport_icao + '_states_TMA_' + year + '_' + month + '_week' + str(week + 1) + '.csv'
         if not arrival:
             filename = 'departure_' + filename
         
@@ -124,8 +124,8 @@ for month in months:
         
         df = df.drop('callsign', 1)
         
-        #filename = 'osn_' + airport_icao + '_states_TMA_raw_' + year + '_' + month + '_week' + str(week + 1) + '.csv'
-        filename = 'osn_' + airport_icao + '_states_TMA_' + year + '_' + month + '_week' + str(week + 1) + '.csv'
+        filename = 'osn_' + airport_icao + '_states_TMA_raw_' + year + '_' + month + '_week' + str(week + 1) + '.csv'
+        #filename = 'osn_' + airport_icao + '_states_TMA_' + year + '_' + month + '_week' + str(week + 1) + '.csv'
         if not arrival:
             filename = 'departure_' + filename
         

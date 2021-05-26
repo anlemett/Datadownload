@@ -1,14 +1,14 @@
 ##############################################################################
 
-airport_icao = "ESSA"
-#airport_icao = "ESGG"
+#airport_icao = "ESSA"
+airport_icao = "ESGG"
 #airport_icao = "EIDW" # Dublin
 #airport_icao = "LOWW" # Vienna
 
 year = '2019'
 
-months = ['01', '02', '03', '04', '05', '06', '07', '08', '09', '10', '11', '12']
-#months = ['10']
+#months = ['01', '02', '03', '04', '05', '06', '07', '08', '09', '10', '11', '12']
+months = ['02']
 
 ##############################################################################
 
@@ -49,7 +49,7 @@ for month in months:
         
         df = pd.read_csv(full_filename, sep=' ',
                                  names = ['flightId', 'sequence', 'timestamp', 'lat', 'lon', 'rawAltitude', 'altitude', 'velocity', 'endDate'],
-                                 dtype={'sequence':int, 'timestamp':int, 'rawAltitude':int, 'altitude':float, 'endDate':str})
+                                 dtype={'sequence':int, 'timestamp':int, 'rawAltitude':float, 'altitude':float, 'endDate':str})
         
         
         new_df = pd.DataFrame(columns=['flightId', 'sequence', 'timestamp', 'lat', 'lon', 'rawAltitude', 'altitude', 'velocity', 'endDate'],
