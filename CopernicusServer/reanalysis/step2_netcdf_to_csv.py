@@ -6,6 +6,7 @@ year = 2019
 
 airport_icao = 'ESGG'
 
+
 filename = 'data/' + airport_icao + '/' + airport_icao + '_' + str(year) + '_reanalysis.'
 
 

@@ -1,8 +1,10 @@
-import pandas as pd
 
 year = 2019
 
 airport_icao = 'ESGG'
+
+
+import pandas as pd
 
 filename = 'data/' + airport_icao + '/' + airport_icao + '_' + str(year) + '_reanalysis.'
 
