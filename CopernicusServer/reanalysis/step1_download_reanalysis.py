@@ -1,6 +1,7 @@
 
 year = '2020'
 airport_icao = 'ESSA'
+#airport_icao = 'ESGG'
 
 
 import cdsapi

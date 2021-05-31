@@ -1,11 +1,13 @@
+
+year = 2020
+
+airport_icao = 'ESSA'
+#airport_icao = 'ESGG'
+
+
 import xarray as xr
 from math import sqrt
 import pandas as pd
-
-year = 2019
-
-airport_icao = 'ESGG'
-
 
 filename = 'data/' + airport_icao + '/' + airport_icao + '_' + str(year) + '_reanalysis.'
 
@@ -55,6 +57,6 @@ df = df[['month','day','hour', 'latitude', 'longitude', 'i10fg', 'wind', 'cbh', 
 
 df = df.sort_values(by = ['month', 'day', 'hour', 'latitude', 'longitude'], ascending = [True, True, True, True, False])
 
-df.to_csv(filename + 'csv', sep=' ', encoding='utf-8', float_format='%.6f', header=True, index=False)
+df.to_csv(filename + 'csv', sep=' ', encoding='utf-8', float_format='%.12f', header=True, index=False)
 
 print((time.time()-start_time)/60)

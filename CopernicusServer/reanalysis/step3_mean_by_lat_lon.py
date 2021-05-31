@@ -1,12 +1,13 @@
 
-year = 2019
+year = 2020
 
-airport_icao = 'ESGG'
+airport_icao = 'ESSA'
+#airport_icao = 'ESGG'
 
 
 import pandas as pd
 
-filename = 'data/' + airport_icao + '/' + airport_icao + '_' + str(year) + '_reanalysis.'
+filename = 'data/' + airport_icao + '/' + airport_icao + '_' + str(year) + '_reanalysis.csv'
 
 
 import time
@@ -62,6 +63,6 @@ mean_df['tp'] = mean_tp
 
 
 filename = 'data/' + airport_icao + '/' + airport_icao + '_' + str(year) + '_mean_by_lat_lon.csv'
-mean_df.to_csv(filename, sep=' ', encoding='utf-8', float_format='%.6f', header=True, index=False)
+mean_df.to_csv(filename, sep=' ', encoding='utf-8', float_format='%.12f', header=True, index=False)
 
 print((time.time()-start_time)/60)
