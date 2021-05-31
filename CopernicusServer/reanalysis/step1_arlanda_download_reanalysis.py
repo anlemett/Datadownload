@@ -1,15 +1,25 @@
 import cdsapi
 
+year = '2020'
+airport_icao = 'ESSA'
+
 c = cdsapi.Client()
 
 c.retrieve(
     'reanalysis-era5-single-levels',
     {
-        'product_type': 'ensemble_members',
+        'product_type': 'reanalysis',
         'format': 'netcdf',
-        'variable': ['cloud_base_height'],
-        'year': '2018',
-        'month': '11',
+        'year': year,
+        'variable': [
+            '10m_u_component_of_wind', '10m_v_component_of_wind', 'instantaneous_10m_wind_gust',
+            'cloud_base_height', 'low_cloud_cover', 'total_cloud_cover',
+            'convective_available_potential_energy', 'convective_precipitation',
+            'total_precipitation',
+        ],
+        'month': [
+            '01', '02', '03', '04', '05', '06', '07', '08', '09', '10', '11', '12'
+        ],
         'day': [
             '01', '02', '03',
             '04', '05', '06',
@@ -21,6 +31,7 @@ c.retrieve(
             '22', '23', '24',
             '25', '26', '27',
             '28', '29', '30',
+            '31',
         ],
         'time': [
             '00:00', '01:00', '02:00',
@@ -32,6 +43,6 @@ c.retrieve(
             '18:00', '19:00', '20:00',
             '21:00', '22:00', '23:00',
         ],
-        'area': '67/20/67/20',
+        'area': '61/17/59/19',
     },
-    'kiruna_cbh_2018_November_ensemble.nc')
+    'data/' + airport_icao + '/' + airport_icao + '_'  + year + '_reanalysis.nc')

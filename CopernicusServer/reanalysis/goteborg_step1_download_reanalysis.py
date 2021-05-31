@@ -2,18 +2,22 @@ import cdsapi
 
 c = cdsapi.Client()
 
+year = '2020'
+
 c.retrieve(
     'reanalysis-era5-single-levels',
     {
         'product_type': 'reanalysis',
         'format': 'netcdf',
-        'year': '2018',
-        'variable': ['10m_u_component_of_wind', '10m_v_component_of_wind'],
+        'year': year,
+        'variable': [
+            '10m_u_component_of_wind', '10m_v_component_of_wind', 'instantaneous_10m_wind_gust',
+            'cloud_base_height', 'low_cloud_cover', 'total_cloud_cover',
+            'convective_available_potential_energy', 'convective_precipitation',
+            'total_precipitation',
+        ],
         'month': [
-            '01', '02', '03',
-            '04', '05', '06',
-            '07', '08', '09',
-            '10', '11', '12',
+            '01', '02', '03', '04', '05', '06', '07', '08', '09', '10', '11', '12'
         ],
         'day': [
             '01', '02', '03',
@@ -38,6 +42,6 @@ c.retrieve(
             '18:00', '19:00', '20:00',
             '21:00', '22:00', '23:00',
         ],
-        'area': '67/20/67/20',
+        'area': '57/11/59/13',
     },
-    'kiruna_wind_2018_reanalysis.nc')
+    'data/goteborg/goteborg_' + year + '_03_07_reanalysis.nc')

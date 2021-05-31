@@ -2,10 +2,9 @@ import pandas as pd
 
 year = 2019
 
-first_month = '03'
-last_month = '07'
+airport_icao = 'ESGG'
 
-filename = 'data/goteborg/goteborg_' + str(year) + '_' + first_month + '_' + last_month + '_reanalysis.csv'
+filename = 'data/' + airport_icao + '/' + airport_icao + '_' + str(year) + '_reanalysis.'
 
 
 import time
@@ -60,7 +59,7 @@ mean_df['cp'] = mean_cp
 mean_df['tp'] = mean_tp
 
 
-filename = 'data/goteborg/goteborg_' + str(year) + '_' + first_month + '_' + last_month + '_mean_by_lat_lon.csv'
+filename = 'data/' + airport_icao + '/' + airport_icao + '_' + str(year) + '_mean_by_lat_lon.csv'
 mean_df.to_csv(filename, sep=' ', encoding='utf-8', float_format='%.6f', header=True, index=False)
 
 print((time.time()-start_time)/60)
