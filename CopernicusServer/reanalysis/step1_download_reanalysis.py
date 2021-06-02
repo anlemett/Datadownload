@@ -1,5 +1,5 @@
 
-year = '2020'
+year = '2019'
 airport_icao = 'ESSA'
 #airport_icao = 'ESGG'
 
@@ -24,6 +24,7 @@ c.retrieve(
             'cloud_base_height', 'low_cloud_cover', 'total_cloud_cover',
             'convective_available_potential_energy', 'convective_precipitation',
             'total_precipitation',
+            'snowfall', 'snow_depth'
         ],
         'month': [
             '01', '02', '03', '04', '05', '06', '07', '08', '09', '10', '11', '12'

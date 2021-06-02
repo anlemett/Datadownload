@@ -1,8 +1,8 @@
 
-year = 2020
+year = 2019
 
-airport_icao = 'ESSA'
-#airport_icao = 'ESGG'
+#airport_icao = 'ESSA'
+airport_icao = 'ESGG'
 
 
 import xarray as xr
@@ -52,7 +52,7 @@ df['wind'] = df.apply(lambda row: getWind(row['u10'], row['v10']), axis=1)
 
 
 
-df = df[['month','day','hour', 'latitude', 'longitude', 'i10fg', 'wind', 'cbh', 'lcc', 'tcc', 'cape', 'cp', 'tp']]
+df = df[['month','day','hour', 'latitude', 'longitude', 'i10fg', 'wind', 'cbh', 'lcc', 'tcc', 'cape', 'cp', 'tp', 'sf', 'sd']]
 
 
 df = df.sort_values(by = ['month', 'day', 'hour', 'latitude', 'longitude'], ascending = [True, True, True, True, False])
