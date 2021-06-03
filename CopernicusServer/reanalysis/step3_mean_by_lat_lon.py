@@ -1,5 +1,5 @@
 
-year = 2020
+year = 2019
 
 airport_icao = 'ESSA'
 #airport_icao = 'ESGG'
@@ -19,7 +19,7 @@ pd.set_option('display.max_columns', None)
 print(df.head())
 
 
-df = df[['month','day','hour', 'latitude', 'longitude', 'i10fg', 'wind', 'cbh', 'lcc', 'tcc', 'cape', 'cp', 'tp']]
+df = df[['month','day','hour', 'latitude', 'longitude', 'i10fg', 'wind', 'cbh', 'lcc', 'tcc', 'cape', 'cp', 'tp', 'sf', 'sd']]
 df.set_index(['month', 'day', 'hour'], inplace=True)
 
 month = []
@@ -33,6 +33,8 @@ mean_tcc = []
 mean_cape = []
 mean_cp = []
 mean_tp = []
+mean_sf = []
+mean_sd = []
 
 for idx, hour_df in df.groupby(level=[0, 1, 2]):
     month.append(idx[0])
@@ -46,6 +48,8 @@ for idx, hour_df in df.groupby(level=[0, 1, 2]):
     mean_cape.append(round(hour_df['cape'].mean(),3))
     mean_cp.append(round(hour_df['cp'].mean(),3))
     mean_tp.append(round(hour_df['tp'].mean(),3))
+    mean_sf.append(round(hour_df['sf'].mean(),3))
+    mean_sd.append(round(hour_df['sd'].mean(),3))
     
 
 mean_df = pd.DataFrame()
@@ -60,6 +64,8 @@ mean_df['tcc'] = mean_tcc
 mean_df['cape'] = mean_cape
 mean_df['cp'] = mean_cp
 mean_df['tp'] = mean_tp
+mean_df['sf'] = mean_sf
+mean_df['sd'] = mean_sd
 
 
 filename = 'data/' + airport_icao + '/' + airport_icao + '_' + str(year) + '_mean_by_lat_lon.csv'
