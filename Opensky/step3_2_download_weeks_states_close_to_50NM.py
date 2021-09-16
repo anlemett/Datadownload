@@ -1,17 +1,16 @@
 ##############################################################################
 
 #airport_icao = "ESSA"
-airport_icao = "ESGG"
-#airport_icao = "EIDW" # Dublin
+#airport_icao = "ESGG"
+airport_icao = "EIDW" # Dublin
 #airport_icao = "LOWW" # Vienna
 
 arrival = True
 
 year = "2019"
 
-months = ['01', '02', '03', '04', '05', '06', '07', '08', '09', '10', '11', '12']
-#months = ['01', '02', '03']
-
+#months = ['01', '02', '03', '04', '05', '06', '07', '08', '09', '10', '11', '12']
+months = ['10']
 
 ##############################################################################
 
@@ -19,8 +18,8 @@ import os
 
 DATA_DIR = os.path.join("data", airport_icao)
 DATA_DIR = os.path.join(DATA_DIR, year)
-INPUT_DIR = os.path.join(DATA_DIR, "osn_" + airport_icao + "_tracks_TMA_" + year)
-OUTPUT_DIR = os.path.join(DATA_DIR, "osn_" + airport_icao + "_states_close_to_TMA_" + year)
+INPUT_DIR = os.path.join(DATA_DIR, "osn_" + airport_icao + "_tracks_50NM_" + year)
+OUTPUT_DIR = os.path.join(DATA_DIR, "osn_" + airport_icao + "_states_close_to_50NM_" + year)
 
 if not os.path.exists(INPUT_DIR):
     os.makedirs(INPUT_DIR)
@@ -45,17 +44,8 @@ import calendar
 from shapely.geometry import Point
 from shapely.geometry.polygon import Polygon
 
-'''
-if airport_icao == "ESSA":
-    from constants_ESSA import *
-elif airport_icao == "ESGG":
-    from constants_ESGG import *
-elif airport_icao == "EIDW":
-    from constants_EIDW import *
-elif airport_icao == "LOWW":
-    from constants_LOWW import *'''
 
-def get_df(impala_log, time_end):
+def get_df(impala_log, time_begin, time_end):
 
     s = StringIO()
     count = 0
@@ -79,6 +69,10 @@ def get_df(impala_log, time_end):
         df[['altitude', 'velocity']] = df[['altitude', 'velocity']].apply(pd.to_numeric, downcast='integer', errors='coerce').fillna(0)
         df['altitude'] = df['altitude'].astype(int)
         df['velocity'] = df['velocity'].astype(int)
+        
+        begin_datetime = datetime.utcfromtimestamp(time_begin)
+        df['beginDate'] = begin_datetime.strftime('%y%m%d')
+        
         end_datetime = datetime.utcfromtimestamp(time_end)
         df['endDate'] = end_datetime.strftime('%y%m%d')
 
@@ -129,6 +123,8 @@ def closeConnection(client, shell):
 
 #Set in this function which fields to extract (in sql request)
 def request_states(shell, icao24, time_begin, time_end):
+    
+    #print("request_states", icao24)
 
     time_begin_datetime = datetime.utcfromtimestamp(time_begin)
     time_begin_datetime = time_begin_datetime.replace(tzinfo=pytz.timezone('UTC'))
@@ -159,13 +155,24 @@ def request_states(shell, icao24, time_begin, time_end):
         time.sleep(1)
     
     total = ""
+    count = 0
     while len(total) == 0 or total[-10:] != ":21000] > ":
+        #print("inside while", count)
+        count = count + 1
         b = shell.recv(256)
+        #print("after shell.recv")
         total += b.decode()
+        #print("after b.decode")
+        #print(total)
 
     impala_log = StringIO(total)
+    
+    #print("total")
+    #print(total)
+    #print("impala_log")
+    #print(impala_log)
 
-    return get_df(impala_log, time_end)
+    return get_df(impala_log, time_begin, time_end)
 
 
 def download_states_week(month, week):
@@ -178,14 +185,10 @@ def download_states_week(month, week):
     
     
     # opensky tracks csv
-    opensky_tracks_filename = 'osn_' + airport_icao + '_tracks_TMA_' + year + '_' + month + '_week' + str(week) + '.csv'
-    if not arrival:
-        opensky_tracks_filename = 'departure_' + opensky_tracks_filename
+    opensky_tracks_filename = 'osn_' + airport_icao + '_tracks_50NM_' + year + '_' + month + '_week' + str(week) + '.csv'
 
     #opensky states inside TMA csv
-    opensky_states_filename = 'osn_' + airport_icao + '_states_close_to_TMA_' + year + '_' + month + '_week' + str(week) + '.csv'
-    if not arrival:
-        opensky_states_filename = 'departure_' + opensky_states_filename
+    opensky_states_filename = 'osn_' + airport_icao + '_states_close_to_50NM_' + year + '_' + month + '_week' + str(week) + '.csv'
 
     opensky_states_df = pd.DataFrame()
 
@@ -241,7 +244,7 @@ def download_states_week(month, week):
     for flight_id, flight_id_group in opensky_states_df.groupby(level='flight_id'):
         
         count = count + 1
-        print(airport_icao, year, month, week+1, flight_id_num, count)
+        print(airport_icao, year, month, week, flight_id_num, count)
         
         flight_id_group_length = len(flight_id_group)
         
@@ -253,7 +256,7 @@ def download_states_week(month, week):
         
         new_flight_df['sequence'] = sequence_list
 
-        new_flight_df = new_flight_df[['sequence', 'timestamp', 'lat', 'lon', 'altitude', 'velocity', 'endDate']]
+        new_flight_df = new_flight_df[['sequence', 'timestamp', 'lat', 'lon', 'altitude', 'velocity', 'beginDate', 'endDate']]
         
         new_states_df = new_states_df.append(new_flight_df)
         
@@ -279,7 +282,6 @@ for month in months:
         proc = Process(target=download_states_week, args=(month, week + 1,))
         procs.append(proc)
         proc.start()
-        #download_states_week(month, week + 1)
         
     # complete the processes
     for proc in procs:

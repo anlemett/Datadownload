@@ -1,14 +1,14 @@
 ##############################################################################
 
 #airport_icao = "ESSA"
-airport_icao = "ESGG"
-#airport_icao = "EIDW" # Dublin
+#airport_icao = "ESGG"
+airport_icao = "EIDW" # Dublin
 #airport_icao = "LOWW" # Vienna
 
 year = '2019'
 
 #months = ['01', '02', '03', '04', '05', '06', '07', '08', '09', '10', '11', '12']
-months = ['02']
+months = ['10']
 
 ##############################################################################
 
@@ -17,15 +17,14 @@ import os
 DATA_DIR = os.path.join("data", airport_icao)
 DATA_DIR = os.path.join(DATA_DIR, year)
 
-INPUT_DIR = os.path.join(DATA_DIR, "osn_" + airport_icao + "_states_TMA_" + year)
-OUTPUT_DIR = os.path.join(DATA_DIR, "osn_" + airport_icao + "_states_TMA_" + year)
+INPUT_DIR = os.path.join(DATA_DIR, "osn_" + airport_icao + "_states_50NM_" + year)
+OUTPUT_DIR = os.path.join(DATA_DIR, "osn_" + airport_icao + "_states_50NM_" + year)
 
 import pandas as pd
 import numpy as np
 import calendar
 
-from shapely.geometry import Point
-from shapely.geometry.polygon import Polygon
+from geopy.distance import geodesic
 
 if airport_icao == "ESSA":
     from constants_ESSA import *
@@ -38,6 +37,15 @@ elif airport_icao == "LOWW":
 import time
 start_time = time.time()
 
+def check_51NM_circle_contains_point(point):
+    
+    central_point = (central_lat, central_lon)
+    distance = geodesic(central_point, point).meters
+    
+    if distance < 51*1852:
+        return True
+    else:
+        return False
 
 for month in months:
     print(month)
@@ -49,14 +57,14 @@ for month in months:
         
         print(airport_icao, year, month, week+1)
         
-        filename = 'osn_' + airport_icao + '_states_TMA_' + year + '_' + month + '_week' + str(week + 1) + '.csv'
+        filename = 'osn_' + airport_icao + '_states_50NM_' + year + '_' + month + '_week' + str(week + 1) + '.csv'
         
         full_filename = os.path.join(INPUT_DIR, filename)
         
         
         df = pd.read_csv(full_filename, sep=' ',
-                                 names = ['flightId', 'sequence', 'timestamp', 'lat', 'lon', 'rawAltitude', 'altitude', 'velocity', 'endDate'],
-                                 dtype={'sequence':int, 'timestamp':int, 'rawAltitude':int, 'altitude':float, 'endDate':str})
+                                 names = ['flightId', 'sequence', 'timestamp', 'lat', 'lon', 'rawAltitude', 'altitude', 'velocity', 'beginDate', 'endDate'],
+                                 dtype={'sequence':int, 'timestamp':int, 'rawAltitude':int, 'altitude':float, 'velocity':int, 'beginDate':str, 'endDate':str})
 
         df.set_index(['flightId', 'sequence'], inplace = True)
 
@@ -69,19 +77,9 @@ for month in months:
             print(airport_icao, year, month, week+1, flight_id_num, count, flight_id)
             
             ###################################################################
-            # Latitude or longitude outside of TMA too much
+            # Latitude or longitude outside of 50NM too much (>51NM)
             ###################################################################
             
-            lon_min = min(TMA_lon) - 0.5
-            lon_max = max(TMA_lon) + 0.5
-            lat_min = min(TMA_lat) - 0.5
-            lat_max = max(TMA_lat) + 0.5
-            
-            rect_lon = [lon_min, lon_min, lon_max, lon_max, lon_min]
-            rect_lat = [lat_min, lat_max, lat_max, lat_min, lat_min]
-            
-            lons_lats_vect = np.column_stack((rect_lon, rect_lat)) # Reshape coordinates
-            polygon = Polygon(lons_lats_vect) # create polygon
             
             flight_states_df = flight_id_group.copy() 
             
@@ -94,9 +92,9 @@ for month in months:
                 
                 for seq, row in flight_states_df.iterrows():
                     
-                    point = Point(row["lon"], row["lat"])
+                    point = (row["lat"], row["lon"])
                     
-                    if not polygon.contains(point):
+                    if not check_51NM_circle_contains_point(point):
                         remove = 1
                         break
                         
@@ -105,7 +103,7 @@ for month in months:
                 continue
         
         
-        filename = 'osn_' + airport_icao + '_states_TMA_' + year + '_' + month + '_week' + str(week + 1) + '.csv'
+        filename = 'osn_' + airport_icao + '_states_50NM_' + year + '_' + month + '_week' + str(week + 1) + '.csv'
 
         full_filename = os.path.join(OUTPUT_DIR, filename)
         

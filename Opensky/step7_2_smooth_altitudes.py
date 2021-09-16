@@ -1,25 +1,25 @@
 ##############################################################################
 
 #airport_icao = "ESSA"
-airport_icao = "ESGG"
-#airport_icao = "EIDW" # Dublin
+#airport_icao = "ESGG"
+airport_icao = "EIDW" # Dublin
 #airport_icao = "LOWW" # Vienna
 
 year = '2019'
 
 #months = ['01', '02', '03', '04', '05', '06', '07', '08', '09', '10', '11', '12']
-months = ['02']
+months = ['10']
 
 ##############################################################################
-# maximum alitude (ceiling) arrival aircraft enter the TMA
+# For 50NM circle the maximum alitude (ceiling) should be above the cruise altitude
 # needed to determine altitude fluctuation at the first point
-TMA_altitude_threshold = 9000
+cruise_altitude_threshold = 15000
 
-# Alternative solution - make TMA_altitude_threshold different for diferent airports
-# If TMA_altitude_threshold is too big, the fluctuation at first point might be treated as the normal altitude, then the next normal
+# Alternative solution - make altitude_threshold different for diferent airports
+# If altitude_threshold is too big, the fluctuation at first point might be treated as the normal altitude, then the next normal
 # altitude is considered as fluctuation, as a result we get wrong vertical profile (horizontal line). The flight might be filtered out
 # using the last point altitude (next step).
-# If TMA_altitude_threshold is too small, the normal (big) altitude might be treated as fluctuation, then the first altitude below
+# If altitude_threshold is too small, the normal (big) altitude might be treated as fluctuation, then the first altitude below
 # the threshold is treated as the normal one, as a result we get fake level for all altitudes above the threshold.
 # For statistics the first approach is better.
 
@@ -42,26 +42,15 @@ altitude_fluctuation_threshold_down = 600
 # altitude, but the difference between this altittude and the previous correct altitude is above the fluctuation down threshold. Flights 
 # of this kind are also filtered out using the last point altitude (next step).
 
-'''if airport_icao == "ESSA":
-    TMA_altitude_threshold = 8000 # ?
-elif airport_icao == "ESGG":
-    TMA_altitude_threshold = 8000 # ?
-elif airport_icao == "EIDW":
-    TMA_altitude_threshold = 9000
-elif airport_icao == "LOWW":
-    TMA_altitude_threshold = 6000'''
-
 import os
 
 DATA_DIR = os.path.join("data", airport_icao)
 DATA_DIR = os.path.join(DATA_DIR, year)
-INPUT_DIR = os.path.join(DATA_DIR, "osn_" + airport_icao + "_states_TMA_raw_" + year)
-#INPUT_DIR = os.path.join(DATA_DIR, "osn_" + airport_icao + "_states_TMA_" + year)
-OUTPUT_DIR = os.path.join(DATA_DIR, "osn_" + airport_icao + "_states_TMA_" + year)
+INPUT_DIR = os.path.join(DATA_DIR, "osn_" + airport_icao + "_states_50NM_raw_" + year)
+OUTPUT_DIR = os.path.join(DATA_DIR, "osn_" + airport_icao + "_states_50NM_" + year)
 
 if not os.path.exists(OUTPUT_DIR):
     os.makedirs(OUTPUT_DIR)
-
 
 
 import pandas as pd
@@ -81,26 +70,17 @@ for month in months:
     
         print(airport_icao, year, month, week+1)
         
-        filename = 'osn_' + airport_icao + '_states_TMA_raw_' + year + '_' + month + '_week' + str(week + 1) + '.csv'
-        #filename = 'osn_' + airport_icao + '_states_TMA_' + year + '_' + month + '_week' + str(week + 1) + '.csv'
+        filename = 'osn_' + airport_icao + '_states_50NM_raw_' + year + '_' + month + '_week' + str(week + 1) + '.csv'
         
         full_filename = os.path.join(INPUT_DIR, filename)
         
         
         df = pd.read_csv(full_filename, sep=' ',
-                                 names = ['flightId', 'sequence', 'timestamp', 'lat', 'lon', 'rawAltitude', 'velocity', 'endDate'],
+                                 names = ['flightId', 'sequence', 'timestamp', 'lat', 'lon', 'rawAltitude', 'velocity', 'beginDate', 'endDate'],
                                  index_col=False,
                                  dtype={'sequence':int, 'timestamp':int, 'rawAltitude':float, 'endDate':str})
         
-        #print(df.head(1))
-        
-        #df = pd.read_csv(full_filename, sep=' ',
-        #                         names = ['flightId', 'sequence', 'timestamp', 'lat', 'lon', 'rawAltitude', 'altitude', 'velocity', 'endDate'],
-        #                         index_col=False,
-        #                         dtype={'sequence':int, 'timestamp':int, 'rawAltitude':int, 'altitude':float, 'endDate':str})
-
-
-        new_df = pd.DataFrame(columns=['flightId', 'sequence', 'timestamp', 'lat', 'lon', 'rawAltitude', 'altitude', 'velocity', 'endDate'],
+        new_df = pd.DataFrame(columns=['flightId', 'sequence', 'timestamp', 'lat', 'lon', 'rawAltitude', 'altitude', 'velocity', 'beginDate', 'endDate'],
                               dtype=str)
 
         df.set_index(['flightId', 'sequence'], inplace = True)
@@ -116,9 +96,9 @@ for month in months:
             
             print(airport_icao, year, month, week+1, flight_id_num, count, flight_id)
             
-            below_TMA_altitude_threshold_df = flight_id_group[(flight_id_group['rawAltitude'] > 0) & (flight_id_group['rawAltitude'] < TMA_altitude_threshold)]
+            below_cruise_altitude_threshold_df = flight_id_group[(flight_id_group['rawAltitude'] > 0) & (flight_id_group['rawAltitude'] < cruise_altitude_threshold)]
             
-            if below_TMA_altitude_threshold_df.empty:    #flight is not landing
+            if below_cruise_altitude_threshold_df.empty:    #flight is not landing
                 continue
             
             flight_states_df = flight_id_group.copy()
@@ -140,7 +120,7 @@ for month in months:
                 
                 prev_altitude = list(flight_states_df['rawAltitude'])[i]
                 
-                while (prev_altitude==0) or (prev_altitude > TMA_altitude_threshold): #fluctuation
+                while (prev_altitude==0) or (prev_altitude > cruise_altitude_threshold): #fluctuation
                     i = i + 1
                     prev_altitude = list(flight_states_df['rawAltitude'])[i]
                 
@@ -184,7 +164,7 @@ for month in months:
             
             flight_states_df = flight_states_df.reset_index(drop=False)
             
-            flight_states_df = flight_states_df[['flightId', 'sequence', 'timestamp', 'lat', 'lon', 'rawAltitude', 'altitude', 'velocity', 'endDate']]
+            flight_states_df = flight_states_df[['flightId', 'sequence', 'timestamp', 'lat', 'lon', 'rawAltitude', 'altitude', 'velocity', 'beginDate', 'endDate']]
             
             new_df = new_df.append(flight_states_df)
             
@@ -193,7 +173,7 @@ for month in months:
             #print(new_df.head(1))
         
         
-        filename = 'osn_' + airport_icao + '_states_TMA_' + year + '_' + month + '_week' + str(week + 1) + '.csv'
+        filename = 'osn_' + airport_icao + '_states_50NM_' + year + '_' + month + '_week' + str(week + 1) + '.csv'
         
         full_filename = os.path.join(OUTPUT_DIR, filename)
         

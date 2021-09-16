@@ -1,14 +1,14 @@
 ##############################################################################
 
 #airport_icao = "ESSA"
-airport_icao = "ESGG"
-#airport_icao = "EIDW" # Dublin
+#airport_icao = "ESGG"
+airport_icao = "EIDW" # Dublin
 #airport_icao = "LOWW" # Vienna
 
 year = '2019'
 
-months = ['01', '02', '03', '04', '05', '06', '07', '08', '09', '10', '11', '12']
-#months = ['02']
+#months = ['01', '02', '03', '04', '05', '06', '07', '08', '09', '10', '11', '12']
+months = ['10']
 
 ##############################################################################
 
@@ -22,8 +22,8 @@ import os
 DATA_DIR = os.path.join("data", airport_icao)
 DATA_DIR = os.path.join(DATA_DIR, year)
 
-INPUT_DIR = os.path.join(DATA_DIR, "osn_" + airport_icao + "_states_close_to_TMA_" + year)
-OUTPUT_DIR = os.path.join(DATA_DIR, "osn_" + airport_icao + "_states_close_to_TMA_fixed_lat_lon_" + year)
+INPUT_DIR = os.path.join(DATA_DIR, "osn_" + airport_icao + "_states_close_to_50NM_" + year)
+OUTPUT_DIR = os.path.join(DATA_DIR, "osn_" + airport_icao + "_states_close_to_50NM_fixed_lat_lon_" + year)
 
 if not os.path.exists(OUTPUT_DIR):
     os.makedirs(OUTPUT_DIR)
@@ -46,20 +46,20 @@ for month in months:
         
         print(airport_icao, year, month, week+1)
         
-        filename = 'osn_' + airport_icao + '_states_close_to_TMA_' + year + '_' + month + '_week' + str(week + 1) + '.csv'
+        filename = 'osn_' + airport_icao + '_states_close_to_50NM_' + year + '_' + month + '_week' + str(week + 1) + '.csv'
         
         full_filename = os.path.join(INPUT_DIR, filename)
         
         
         df = pd.read_csv(full_filename, sep=' ',
-                                 names = ['flightId', 'sequence', 'timestamp', 'lat', 'lon', 'rawAltitude', 'velocity', 'endDate'],
+                                 names = ['flightId', 'sequence', 'timestamp', 'lat', 'lon', 'rawAltitude', 'velocity', 'beginDate', 'endDate'],
                                  dtype={'sequence':int, 'timestamp':int, 'rawAltitude':int, 'endDate':str})
 
         df.set_index(['flightId', 'sequence'], inplace = True)
 
         flight_id_num = len(df.groupby(level='flightId'))
         
-        new_df = pd.DataFrame(columns=['flightId', 'sequence', 'timestamp', 'lat', 'lon', 'rawAltitude', 'velocity', 'endDate'],
+        new_df = pd.DataFrame(columns=['flightId', 'sequence', 'timestamp', 'lat', 'lon', 'rawAltitude', 'velocity', 'beginDate', 'endDate'],
                               dtype=str)
 
         count = 0
@@ -107,7 +107,7 @@ for month in months:
                 
                 lons = list(flight_id_group['lon'])
                 
-                #first lon (correct as it is inside TMA):
+                #first lon (correct because it is inside the circle):
                 prev_lon = lons[0]
                 
                 for i in range(1, number_of_points):
@@ -134,11 +134,11 @@ for month in months:
                 flight_states_df["lon"] = lons
 
             flight_states_df.reset_index(drop = False, inplace = True)
-            flight_states_df = flight_states_df[['flightId', 'sequence', 'timestamp', 'lat', 'lon', 'rawAltitude', 'velocity', 'endDate']]
+            flight_states_df = flight_states_df[['flightId', 'sequence', 'timestamp', 'lat', 'lon', 'rawAltitude', 'velocity', 'beginDate', 'endDate']]
             
             new_df = new_df.append(flight_states_df)
             
-        filename = 'osn_' + airport_icao + '_states_close_to_TMA_' + year + '_' + month + '_week' + str(week + 1) + '.csv'
+        filename = 'osn_' + airport_icao + '_states_close_to_50NM_' + year + '_' + month + '_week' + str(week + 1) + '.csv'
 
         full_filename = os.path.join(OUTPUT_DIR, filename)
         

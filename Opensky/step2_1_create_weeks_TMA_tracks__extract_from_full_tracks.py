@@ -1,16 +1,16 @@
 ##############################################################################
 
 #airport_icao = "ESSA"
-airport_icao = "ESGG"
-#airport_icao = "EIDW" # Dublin
+#airport_icao = "ESGG"
+airport_icao = "EIDW" # Dublin
 #airport_icao = "LOWW" # Vienna
 
 arrival = True
 
-year = '2021'
+year = '2019'
 
 #months = ['01', '02', '03', '04', '05', '06', '07', '08', '09', '10', '11', '12']
-months = ['01', '02', '03']
+months = ['10']
 
 
 ##############################################################################
