@@ -11,3 +11,6 @@ TMA_lat=[53.9167, 53.7672, 53.0975, 52.7594, 52.3333, 52.6139, 52.7594, 53.0908,
 
 central_lat = 53.42
 central_lon = -6.27
+
+#central_lat = min(TMA_lat) + (max(TMA_lat)-min(TMA_lat))/2
+#central_lon = min(TMA_lon) + (max(TMA_lon)-min(TMA_lon))/2

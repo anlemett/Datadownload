@@ -1,8 +1,8 @@
 ##############################################################################
 
-#airport_icao = "ESSA"
+airport_icao = "ESSA"
 #airport_icao = "ESGG"
-airport_icao = "EIDW" # Dublin
+#airport_icao = "EIDW" # Dublin
 #airport_icao = "LOWW" # Vienna
 
 arrival = True
@@ -16,10 +16,10 @@ months = ['10']
 
 import os
 
-DATA_DIR = os.path.join("data", airport_icao)
+DATA_DIR = os.path.join("data", airport_icao + '_rwy')
 DATA_DIR = os.path.join(DATA_DIR, year)
 INPUT_DIR = os.path.join(DATA_DIR, "osn_" + airport_icao + "_tracks_50NM_" + year)
-OUTPUT_DIR = os.path.join(DATA_DIR, "osn_" + airport_icao + "_states_close_to_50NM_" + year)
+OUTPUT_DIR = os.path.join(DATA_DIR, "osn_" + airport_icao + "_states_close_to_50NM_raw_" + year)
 
 if not os.path.exists(INPUT_DIR):
     os.makedirs(INPUT_DIR)

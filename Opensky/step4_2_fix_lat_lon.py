@@ -1,8 +1,8 @@
 ##############################################################################
 
-#airport_icao = "ESSA"
+airport_icao = "ESSA"
 #airport_icao = "ESGG"
-airport_icao = "EIDW" # Dublin
+#airport_icao = "EIDW" # Dublin
 #airport_icao = "LOWW" # Vienna
 
 year = '2019'
@@ -12,6 +12,8 @@ months = ['10']
 
 ##############################################################################
 
+# TODO: switch step 4 and 5 (extract first, then fix lat/lon)
+
 # Threshold for lat/lon fluctuattion
 # If the threshold is too big, small fluctuations will be skiped
 # If the threshold is too small, the real value might be treated as fluctuation, hence the whole trajectory is messed up
@@ -19,10 +21,10 @@ threshold = 0.5
 
 import os
 
-DATA_DIR = os.path.join("data", airport_icao)
+DATA_DIR = os.path.join("data", airport_icao + '_rwy')
 DATA_DIR = os.path.join(DATA_DIR, year)
 
-INPUT_DIR = os.path.join(DATA_DIR, "osn_" + airport_icao + "_states_close_to_50NM_" + year)
+INPUT_DIR = os.path.join(DATA_DIR, "osn_" + airport_icao + "_states_close_to_50NM_raw_" + year)
 OUTPUT_DIR = os.path.join(DATA_DIR, "osn_" + airport_icao + "_states_close_to_50NM_fixed_lat_lon_" + year)
 
 if not os.path.exists(OUTPUT_DIR):

@@ -1,8 +1,8 @@
 ##############################################################################
 
-#airport_icao = "ESSA"
+airport_icao = "ESSA"
 #airport_icao = "ESGG"
-airport_icao = "EIDW" # Dublin
+#airport_icao = "EIDW" # Dublin
 #airport_icao = "LOWW" # Vienna
 
 year = '2019'
@@ -44,9 +44,9 @@ altitude_fluctuation_threshold_down = 600
 
 import os
 
-DATA_DIR = os.path.join("data", airport_icao)
+DATA_DIR = os.path.join("data", airport_icao + '_rwy')
 DATA_DIR = os.path.join(DATA_DIR, year)
-INPUT_DIR = os.path.join(DATA_DIR, "osn_" + airport_icao + "_states_50NM_raw_" + year)
+INPUT_DIR = os.path.join(DATA_DIR, "osn_" + airport_icao + "_states_50NM_extracted_" + year)
 OUTPUT_DIR = os.path.join(DATA_DIR, "osn_" + airport_icao + "_states_50NM_" + year)
 
 if not os.path.exists(OUTPUT_DIR):
@@ -70,7 +70,7 @@ for month in months:
     
         print(airport_icao, year, month, week+1)
         
-        filename = 'osn_' + airport_icao + '_states_50NM_raw_' + year + '_' + month + '_week' + str(week + 1) + '.csv'
+        filename = 'osn_' + airport_icao + '_states_50NM_filtered_' + year + '_' + month + '_week' + str(week + 1) + '.csv'
         
         full_filename = os.path.join(INPUT_DIR, filename)
         

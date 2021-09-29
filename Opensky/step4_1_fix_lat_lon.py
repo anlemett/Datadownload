@@ -12,6 +12,8 @@ months = ['10']
 
 ##############################################################################
 
+# TODO: switch step 4 and 5 (extract first, then fix lat/lon)
+
 # Threshold for lat/lon fluctuattion
 # If the threshold is too big, small fluctuations will be skiped
 # If the threshold is too small, the real value might be treated as fluctuation, hence the whole trajectory is messed up

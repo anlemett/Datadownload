@@ -1,8 +1,8 @@
 ##############################################################################
 
-#airport_icao = "ESSA"
+airport_icao = "ESSA"
 #airport_icao = "ESGG"
-airport_icao = "EIDW" # Dublin
+#airport_icao = "EIDW" # Dublin
 #airport_icao = "LOWW" # Vienna
 
 arrival = True
@@ -31,7 +31,7 @@ elif airport_icao == "EIDW":
 elif airport_icao == "LOWW":
     from constants_LOWW import *
 
-DATA_DIR = os.path.join("data", airport_icao)
+DATA_DIR = os.path.join("data", airport_icao + '_rwy')
 DATA_DIR = os.path.join(DATA_DIR, year)
 INPUT_DIR = os.path.join(DATA_DIR, "osn_" + airport_icao + "_tracks_" + year)
 OUTPUT_DIR = os.path.join(DATA_DIR, "osn_" + airport_icao + "_tracks_50NM_" + year)
@@ -88,8 +88,6 @@ def get_tracks_inside_50NM_circle(month, week, tracks_df, csv_output_file):
         new_df_inside_50NM_circle = new_df_inside_50NM_circle[['flightId', 'sequence', 'origin', 'endDate', 'callsign', 'icao24', 'date', 'time', 
                                                'timestamp', 'lat', 'lon', 'baroAltitude']]
         
-        
-        #if new_df.iloc[entry_point_index-1]['date'] == new_df.iloc[-1]['date']:
         tracks_inside_50NM_circle_df = tracks_inside_50NM_circle_df.append(new_df_inside_50NM_circle)
         
     tracks_inside_50NM_circle_df.to_csv(os.path.join(OUTPUT_DIR, csv_output_file), sep=' ', encoding='utf-8', float_format='%.6f', header=None, index=False)
@@ -102,7 +100,6 @@ def get_entry_point_index(flight_id, new_df):
     for seq, row in new_df.groupby(level='sequence'):
         lat = row.loc[(flight_id, seq)]['lat']
         lon = row.loc[(flight_id, seq)]['lon']
-        #if (check_50NM_circle_contains_point(Point(row.loc[(flight_id, seq)]['lon'], row.loc[(flight_id, seq)]['lat']))):
         if (check_50NM_circle_contains_point((row.loc[(flight_id, seq)]['lat'], row.loc[(flight_id, seq)]['lon']))):
             return seq
     print(lat, lon)
@@ -120,7 +117,7 @@ def check_50NM_circle_contains_point(point):
         return False
 
 
-def extract_TMA_part(month, week):
+def extract_50NM_part(month, week):
     
     input_filename = 'osn_' + airport_icao + '_tracks_' + year + '_' + month + '_week' + str(week) + '.csv'
     
@@ -145,7 +142,7 @@ for month in months:
         
     for week in range(0, number_of_weeks):
         
-        proc = Process(target=extract_TMA_part, args=(month, week + 1,))
+        proc = Process(target=extract_50NM_part, args=(month, week + 1,))
         procs.append(proc)
         proc.start()
         
