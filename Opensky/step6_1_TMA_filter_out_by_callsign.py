@@ -1,11 +1,11 @@
 ##############################################################################
 
-#airport_icao = "ESSA"
+airport_icao = "ESSA"
 #airport_icao = "ESGG"
 #airport_icao = "EIDW" # Dublin
-airport_icao = "LOWW" # Vienna
+#airport_icao = "LOWW" # Vienna
 
-arrival = True
+departure = True
 
 year = '2019'
 
@@ -18,11 +18,11 @@ import os
 
 DATA_DIR = os.path.join("data", airport_icao)
 DATA_DIR = os.path.join(DATA_DIR, year)
-DATA_DIR = os.path.join(DATA_DIR, "osn_" + airport_icao + "_states_TMA_raw_" + year)
-#DATA_DIR = os.path.join(DATA_DIR, "osn_" + airport_icao + "_states_TMA_" + year)
+INPUT_DIR = os.path.join(DATA_DIR, "osn_" + airport_icao + "_states_TMA_extracted_" + year)
+OUTPUT_DIR = os.path.join(DATA_DIR, "osn_" + airport_icao + "_states_TMA_filtered_" + year)
 
-if not os.path.exists(DATA_DIR):
-    os.makedirs(DATA_DIR)
+if not os.path.exists(OUTPUT_DIR):
+    os.makedirs(OUTPUT_DIR)
 
 import pandas as pd
 import calendar
@@ -41,26 +41,25 @@ for month in months:
     
     number_of_weeks = (5, 4)[month == '02' and not calendar.isleap(int(year))]
         
-    for week in range(0, number_of_weeks):
+    #for week in range(0, number_of_weeks):
+    for week in range(0, 1):
         
         print(airport_icao, year, month, week+1)
         
-        filename = 'osn_' + airport_icao + '_states_TMA_raw_all_' + year + '_' + month + '_week' + str(week + 1) + '.csv'
-        #filename = 'osn_' + airport_icao + '_states_TMA_' + year + '_' + month + '_week' + str(week + 1) + '.csv'
-        if not arrival:
-            filename = 'departure_' + filename
+        filename = airport_icao + '_states_TMA_extracted_' + year + '_' + month + '_week' + str(week + 1) + '.csv'
         
-        full_filename = os.path.join(DATA_DIR, filename)
+        if departure:
+            filename = 'osn_departure_' + filename
+        else:
+            filename = 'osn_' + filename
+        
+        full_filename = os.path.join(INPUT_DIR, filename)
         
         
-        #df = pd.read_csv(full_filename, sep=' ',
-        #                         names = ['flightId', 'sequence', 'timestamp', 'lat', 'lon', 'altitude', 'velocity', 'endDate'],
-        #                         index_col=False,
-        #                         dtype=str)
         df = pd.read_csv(full_filename, sep=' ',
-                                 names = ['flightId', 'sequence', 'timestamp', 'lat', 'lon', 'rawAltitude', 'altitude', 'velocity', 'endDate'],
-                                 index_col=False,
-                                 dtype=str)
+            names = ['flightId', 'sequence', 'timestamp', 'lat', 'lon', 'rawAltitude', 'altitude', 'velocity', 'beginDate', 'endDate'],
+            index_col=False,
+            dtype=str)
         
         # Remove the following callsigns
         
@@ -124,12 +123,15 @@ for month in months:
         
         df = df.drop('callsign', 1)
         
-        filename = 'osn_' + airport_icao + '_states_TMA_raw_' + year + '_' + month + '_week' + str(week + 1) + '.csv'
-        #filename = 'osn_' + airport_icao + '_states_TMA_' + year + '_' + month + '_week' + str(week + 1) + '.csv'
-        if not arrival:
-            filename = 'departure_' + filename
+        filename = airport_icao + '_states_TMA_filtered_' + year + '_' + month + '_week' + str(week + 1) + '.csv'
         
-        full_filename = os.path.join(DATA_DIR, filename)
+        if departure:
+            filename = 'osn_departure_' + filename
+        else:
+            filename = 'osn_' + filename
+
+        
+        full_filename = os.path.join(OUTPUT_DIR, filename)
         
         df.to_csv(full_filename, sep=' ', encoding='utf-8', float_format='%.6f', header=False, index=False)
 

@@ -5,9 +5,9 @@ airport_icao = "ESSA"
 #airport_icao = "EIDW" # Dublin
 #airport_icao = "LOWW" # Vienna
 
-departure = True
+arrival = True
 
-year = "2019"
+year = "2021"
 
 #months = ['01', '02', '03', '04', '05', '06', '07', '08', '09', '10', '11', '12']
 months = ['10']
@@ -19,7 +19,8 @@ import os
 DATA_DIR = os.path.join("data", airport_icao)
 DATA_DIR = os.path.join(DATA_DIR, year)
 INPUT_DIR = os.path.join(DATA_DIR, "osn_" + airport_icao + "_tracks_TMA_" + year)
-OUTPUT_DIR = os.path.join(DATA_DIR, "osn_" + airport_icao + "_states_close_to_TMA_" + year)
+#OUTPUT_DIR = os.path.join(DATA_DIR, "osn_" + airport_icao + "_states_close_to_TMA_" + year)
+OUTPUT_DIR = os.path.join(DATA_DIR, "osn_" + airport_icao + "_test_ground_" + year)
 
 if not os.path.exists(INPUT_DIR):
     os.makedirs(INPUT_DIR)
@@ -45,7 +46,7 @@ from shapely.geometry import Point
 from shapely.geometry.polygon import Polygon
 
 
-def get_df(impala_log, time_begin, time_end):
+def get_df(impala_log, time_end):
 
     s = StringIO()
     count = 0
@@ -64,15 +65,11 @@ def get_df(impala_log, time_begin, time_end):
         df = pd.read_csv(s, sep=',', error_bad_lines=False, warn_bad_lines=True)
         df = df.fillna(0)
         df.index = df.index.set_names(['sequence'])
-        df.columns = ['timestamp', 'lat', 'lon', 'altitude', 'velocity']
+        df.columns = ['timestamp', 'lat', 'lon', 'altitude', 'velocity', 'onground']
         df[['lat', 'lon']] = df[['lat', 'lon']].apply(pd.to_numeric, downcast='float', errors='coerce').fillna(0)
         df[['altitude', 'velocity']] = df[['altitude', 'velocity']].apply(pd.to_numeric, downcast='integer', errors='coerce').fillna(0)
         df['altitude'] = df['altitude'].astype(int)
         df['velocity'] = df['velocity'].astype(int)
-        
-        begin_datetime = datetime.utcfromtimestamp(time_begin)
-        df['beginDate'] = begin_datetime.strftime('%y%m%d')
-
         end_datetime = datetime.utcfromtimestamp(time_end)
         df['endDate'] = end_datetime.strftime('%y%m%d')
 
@@ -142,7 +139,7 @@ def request_states(shell, icao24, time_begin, time_end):
     hour_end_str = str(hour_end_timestamp)
 
 
-    request = "select time, lat, lon, baroaltitude, velocity from state_vectors_data4 where icao24=\'" + icao24 + "\' and time>=" + time_begin_str + " and time<=" + time_end_str + " and hour>=" + hour_begin_str + " and hour<=" + hour_end_str + ";\n"
+    request = "select time, lat, lon, baroaltitude, velocity, onground from state_vectors_data4 where icao24=\'" + icao24 + "\' and time>=" + time_begin_str + " and time<=" + time_end_str + " and hour>=" + hour_begin_str + " and hour<=" + hour_end_str + ";\n"
     
     #print(request)
     while not shell.send_ready():
@@ -172,7 +169,7 @@ def request_states(shell, icao24, time_begin, time_end):
     #print("impala_log")
     #print(impala_log)
 
-    return get_df(impala_log, time_begin, time_end)
+    return get_df(impala_log, time_end)
 
 
 def download_states_week(month, week):
@@ -185,30 +182,22 @@ def download_states_week(month, week):
     
     
     # opensky tracks csv
-    opensky_tracks_filename = airport_icao + '_tracks_TMA_' + year + '_' + month + '_week' + str(week) + '.csv'
-    if departure:
-        opensky_tracks_filename = 'osn_departure_' + opensky_tracks_filename
-    else:
-        opensky_tracks_filename = 'osn_' + opensky_tracks_filename
+    opensky_tracks_filename = 'osn_' + airport_icao + '_tracks_TMA_' + year + '_' + month + '_week' + str(week) + '.csv'
+    if not arrival:
+        opensky_tracks_filename = 'departure_' + opensky_tracks_filename
 
-    #opensky states close to TMA csv
-    opensky_states_filename = airport_icao + '_states_close_to_TMA_' + year + '_' + month + '_week' + str(week) + '.csv'
-    if departure:
-        opensky_states_filename = 'osn_departure_' + opensky_states_filename
-    else:
-        opensky_states_filename = 'osn_' + opensky_states_filename
+    #opensky states inside TMA csv
+    opensky_states_filename = 'osn_' + airport_icao + '_states_close_to_TMA_' + year + '_' + month + '_week' + str(week) + '_onground.csv'
+    if not arrival:
+        opensky_states_filename = 'departure_' + opensky_states_filename
 
     opensky_states_df = pd.DataFrame()
 
-    if departure:
-        opensky_tracks_df = pd.read_csv(os.path.join(INPUT_DIR, opensky_tracks_filename), sep=' ',
-            names=['flightId', 'sequence', 'destination', 'beginDate', 'callsign', 'icao24', 'timestamp', 'lat', 'lon', 'baroAltitude'],
-            index_col=[0,1], dtype={'flightId':str, 'sequence':int, 'icao24': str, 'timestamp':int})
-    else:
-        opensky_tracks_df = pd.read_csv(os.path.join(INPUT_DIR, opensky_tracks_filename), sep=' ',
-            names=['flightId', 'sequence', 'origin', 'endDate', 'callsign', 'icao24', 'timestamp', 'lat', 'lon', 'baroAltitude'],
-            index_col=[0,1], dtype={'flightId':str, 'sequence':int, 'icao24': str, 'timestamp':int})
-
+    opensky_tracks_df = pd.read_csv(os.path.join(INPUT_DIR, opensky_tracks_filename), sep=' ',
+                                names=['flightId', 'sequence', 'origin', 'endDate', 'callsign', 'icao24', 'date', 'time', 'timestamp',
+                                    'lat', 'lon', 'baroAltitude'],
+                                index_col=[0,1],
+                                dtype={'flightId':str, 'sequence':int, 'icao24': str, 'timestamp':int})
 
 
     number_of_flights = len(opensky_tracks_df.groupby(level='flightId'))
@@ -239,12 +228,16 @@ def download_states_week(month, week):
             flight_id_states_df.set_index(['flight_id'], inplace=True)
 
             opensky_states_df = pd.concat([opensky_states_df, flight_id_states_df], axis=0, sort=False)
+            
     
     print("Fixing")
     # fix "time" inserted
     opensky_states_df = opensky_states_df[opensky_states_df.timestamp != "time"]
     opensky_states_df = opensky_states_df.astype({"timestamp": int})
     #opensky_states_df["timestamp"] = pd.to_numeric(opensky_states_df["timestamp"])
+    
+    
+    
     
     # sort timestamps and reassign sequence
     
@@ -268,10 +261,11 @@ def download_states_week(month, week):
         
         new_flight_df['sequence'] = sequence_list
 
-        new_flight_df = new_flight_df[['sequence', 'timestamp', 'lat', 'lon', 'altitude', 'velocity', 'beginDate', 'endDate']]
+        new_flight_df = new_flight_df[['sequence', 'timestamp', 'lat', 'lon', 'altitude', 'velocity', 'endDate', 'onground']]
         
         new_states_df = new_states_df.append(new_flight_df)
         
+
     new_states_df.to_csv(os.path.join(OUTPUT_DIR, opensky_states_filename), sep=' ', encoding='utf-8', float_format='%.6f', header=None, index = True)
     
     closeConnection(client, shell)
@@ -287,10 +281,10 @@ for month in months:
 
     procs = [] 
         
-    number_of_weeks = (5, 4)[month == '02' and not calendar.isleap(int(year))]
-    
-    #for week in range(0, number_of_weeks):
-    for week in range(1, number_of_weeks):
+    #number_of_weeks = (5, 4)[month == '02' and not calendar.isleap(int(year))]
+    number_of_weeks = 1
+        
+    for week in range(0, number_of_weeks):
         
         proc = Process(target=download_states_week, args=(month, week + 1,))
         procs.append(proc)

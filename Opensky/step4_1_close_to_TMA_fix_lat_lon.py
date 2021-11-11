@@ -1,9 +1,11 @@
 ##############################################################################
 
-#airport_icao = "ESSA"
+airport_icao = "ESSA"
 #airport_icao = "ESGG"
 #airport_icao = "EIDW" # Dublin
-airport_icao = "LOWW" # Vienna
+#airport_icao = "LOWW" # Vienna
+
+departure = True
 
 year = '2019'
 
@@ -11,8 +13,6 @@ year = '2019'
 months = ['10']
 
 ##############################################################################
-
-# TODO: switch step 4 and 5 (extract first, then fix lat/lon)
 
 # Threshold for lat/lon fluctuattion
 # If the threshold is too big, small fluctuations will be skiped
@@ -42,26 +42,31 @@ for month in months:
     print(month)
     
     number_of_weeks = (5, 4)[month == '02' and not calendar.isleap(int(year))]
-    #number_of_weeks = 1
-        
-    for week in range(0, number_of_weeks):
+    
+    #for week in range(0, number_of_weeks):
+    for week in range(0, 1):
         
         print(airport_icao, year, month, week+1)
         
-        filename = 'osn_' + airport_icao + '_states_close_to_TMA_' + year + '_' + month + '_week' + str(week + 1) + '.csv'
+        #opensky states close to TMA csv
+        filename = airport_icao + '_states_close_to_TMA_' + year + '_' + month + '_week' + str(week+1) + '.csv'
+        if departure:
+            filename = 'osn_departure_' + filename
+        else:
+            filename = 'osn_' + filename
         
         full_filename = os.path.join(INPUT_DIR, filename)
         
         
         df = pd.read_csv(full_filename, sep=' ',
-                                 names = ['flightId', 'sequence', 'timestamp', 'lat', 'lon', 'rawAltitude', 'velocity', 'endDate'],
-                                 dtype={'sequence':int, 'timestamp':int, 'rawAltitude':int, 'endDate':str})
+                                 names = ['flightId', 'sequence', 'timestamp', 'lat', 'lon', 'rawAltitude', 'velocity', 'beginDate', 'endDate'],
+                                 dtype={'sequence':int, 'timestamp':int, 'rawAltitude':int, 'velocity':int, 'beginDate':str, 'endDate':str})
 
         df.set_index(['flightId', 'sequence'], inplace = True)
 
         flight_id_num = len(df.groupby(level='flightId'))
         
-        new_df = pd.DataFrame(columns=['flightId', 'sequence', 'timestamp', 'lat', 'lon', 'rawAltitude', 'velocity', 'endDate'],
+        new_df = pd.DataFrame(columns=['flightId', 'sequence', 'timestamp', 'lat', 'lon', 'rawAltitude', 'velocity', 'beginDate', 'endDate'],
                               dtype=str)
 
         count = 0
@@ -81,11 +86,24 @@ for month in months:
             if not flight_states_df.empty:
                 
                 lats = list(flight_id_group['lat'])
+                lons = list(flight_id_group['lon'])
                 
-                #first lat (correct as it is inside TMA):
-                prev_lat = lats[0]
+                if departure:
+                    first_good_point_index = 0
+                    while lats[first_good_point_index]==0 and lons[first_good_point_index]==0:
+                        first_good_point_index = first_good_point_index + 1
+                else:
+                    # assume that for arrivals first point is close to TMA (checking for some range might be added)
+                    first_good_point_index = 0
+
+                for lat_lon_index in range(0,first_good_point_index):
+                    lats[lat_lon_index] = lats[first_good_point_index]
+                    lons[lat_lon_index] = lons[first_good_point_index]
+                    
+                prev_lat = lats[first_good_point_index]
+                prev_lon = lons[first_good_point_index]
                 
-                for i in range(1, number_of_points): # 191001AAL724 809 
+                for i in range(first_good_point_index+1, number_of_points): 
                     
                     shift = 0
                     
@@ -107,12 +125,7 @@ for month in months:
                     prev_lat = lats[i]
                 
                 
-                lons = list(flight_id_group['lon'])
-                
-                #first lon (correct as it is inside TMA):
-                prev_lon = lons[0]
-                
-                for i in range(1, number_of_points):
+                for i in range(first_good_point_index+1, number_of_points):
                     
                     shift = 0
                     
@@ -136,11 +149,16 @@ for month in months:
                 flight_states_df["lon"] = lons
 
             flight_states_df.reset_index(drop = False, inplace = True)
-            flight_states_df = flight_states_df[['flightId', 'sequence', 'timestamp', 'lat', 'lon', 'rawAltitude', 'velocity', 'endDate']]
+            flight_states_df = flight_states_df[['flightId', 'sequence', 'timestamp', 'lat', 'lon', 'rawAltitude', 'velocity', 'beginDate', 'endDate']]
             
             new_df = new_df.append(flight_states_df)
             
-        filename = 'osn_' + airport_icao + '_states_close_to_TMA_' + year + '_' + month + '_week' + str(week + 1) + '.csv'
+        filename = airport_icao + '_states_close_to_TMA_fixed_lat_lon_' + year + '_' + month + '_week' + str(week + 1) + '.csv'
+        
+        if departure:
+            filename = 'osn_departure_' + filename
+        else:
+            filename = 'osn_' + filename
 
         full_filename = os.path.join(OUTPUT_DIR, filename)
         

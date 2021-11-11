@@ -1,8 +1,8 @@
 ##############################################################################
 
-#airport_icao = "ESSA"
+airport_icao = "ESSA"
 #airport_icao = "ESGG"
-airport_icao = "EIDW" # Dublin
+#airport_icao = "EIDW" # Dublin
 #airport_icao = "LOWW" # Vienna
 
 #airport_icao = "ESNQ" # Kiruna, no flights
@@ -12,11 +12,12 @@ airport_icao = "EIDW" # Dublin
 #airport_icao = "ESMS" #Malmo
 
 
-arrival = True
+departure = False
 
-year = '2021'
+year = '2019'
 
-months = ['01', '02', '03', '04', '05', '06', '07', '08', '09', '10', '11', '12']
+#months = ['01', '02', '03', '04', '05', '06', '07', '08', '09', '10', '11', '12']
+months = ['10']
 
 
 ##############################################################################
@@ -52,7 +53,7 @@ class LiveDataRetriever:
 
     def get_list_of_arriving_aircraft(self, timestamp_begin, timestamp_end):
 
-        arriving_flights_url = self.API_URL + '/flights/arrival'
+        flights_url = self.API_URL + '/flights/arrival'
 
         request_params = {
             'airport': airport_icao,
@@ -63,7 +64,7 @@ class LiveDataRetriever:
         while True:
             try:
                 print("request")
-                res = requests.get(arriving_flights_url, params=request_params, auth=self.AUTH_DATA).json()
+                res = requests.get(flights_url, params=request_params, auth=self.AUTH_DATA).json()
                 break
             except Exception as str_error:
                 print("Exception: ")
@@ -75,7 +76,7 @@ class LiveDataRetriever:
 
     def get_list_of_departure_aircraft(self, timestamp_begin, timestamp_end):
 
-        departure_flights_url = self.API_URL + '/flights/departure'
+        flights_url = self.API_URL + '/flights/departure'
 
         request_params = {
             'airport': airport_icao,
@@ -85,7 +86,7 @@ class LiveDataRetriever:
         
         while True:
             try:
-                res = requests.get(departure_flights_url, params=request_params, auth=self.AUTH_DATA).json()
+                res = requests.get(flights_url, params=request_params, auth=self.AUTH_DATA).json()
                 break
             except Exception as str_error:
                 print("Exception: ")
@@ -157,20 +158,35 @@ def get_tracks_data(data_retriever, flights, date_time_begin, date_time_end, mon
         for element in d['path']:
             new_d = {}
 
-            new_d['origin'] = flights[i]['estDepartureAirport']
+
+            if departure:
+                if flights[i]['estArrivalAirport'] is None:
+                    new_d['destination'] = 'NaN'
+                else:
+                    new_d['destination'] = flights[i]['estArrivalAirport']
+                
+                begin_timestamp = d['startTime']
+                begin_datetime = datetime.utcfromtimestamp(begin_timestamp)
+                new_d['beginDate'] = begin_datetime.strftime('%y%m%d')
+
+            else:
+                if flights[i]['estDepartureAirport'] is None:
+                    new_d['origin'] = 'NaN'
+                else:
+                    new_d['origin'] = flights[i]['estDepartureAirport']
+
+                end_timestamp = d['endTime']
+                end_datetime = datetime.utcfromtimestamp(end_timestamp)
+                new_d['endDate'] = end_datetime.strftime('%y%m%d')
 
             new_d['sequence'] = sequence
             sequence = sequence + 1
 
-            end_timestamp = d['endTime']
-            end_datetime = datetime.utcfromtimestamp(end_timestamp)
-            new_d['endDate'] = end_datetime.strftime('%y%m%d')
-
             el_timestamp = element[0]    #time
             el_datetime = datetime.utcfromtimestamp(el_timestamp)
 
-            new_d['date'] = el_datetime.strftime('%y%m%d')
-            new_d['time'] = el_datetime.strftime('%H%M%S')
+            #new_d['date'] = el_datetime.strftime('%y%m%d')
+            #new_d['time'] = el_datetime.strftime('%H%M%S')
             new_d['timestamp'] = el_timestamp
             new_d['lat'] = element[1]
             new_d['lon'] = element[2]
@@ -193,15 +209,23 @@ def get_tracks_data(data_retriever, flights, date_time_begin, date_time_end, mon
     print(dropped_flights_callsign, file = dropped_flights_file)
     
     dropped_flights_file.close()
-
-    data_df = pd.DataFrame(new_data, columns = ['sequence', 'origin', 'endDate', 'callsign', 'icao24', 'date','time', 'timestamp', 'lat', 'lon', 'baroAltitude'])
+    
+    if departure:
+        #data_df = pd.DataFrame(new_data, columns = ['sequence', 'destination', 'beginDate', 'endDate', 'callsign', 'icao24', 'date','time', 'timestamp', 'lat', 'lon', 'baroAltitude'])
+        data_df = pd.DataFrame(new_data, columns = ['sequence', 'destination', 'beginDate', 'callsign', 'icao24', 'timestamp', 'lat', 'lon', 'baroAltitude'])
+    else:
+        #data_df = pd.DataFrame(new_data, columns = ['sequence', 'origin', 'beginDate', 'endDate', 'callsign', 'icao24', 'date','time', 'timestamp', 'lat', 'lon', 'baroAltitude'])
+        data_df = pd.DataFrame(new_data, columns = ['sequence', 'origin', 'endDate', 'callsign', 'icao24', 'timestamp', 'lat', 'lon', 'baroAltitude'])
 
     return data_df
 
 
 def assign_flight_ids(month, week, tracks_df, output_filename):
-
-    tracks_df['flight_id'] = tracks_df.apply(lambda row: str(row['endDate']) + str(row['callsign']), axis = 1) 
+    
+    if departure:
+        tracks_df['flight_id'] = tracks_df.apply(lambda row: str(row['beginDate']) + str(row['callsign']), axis = 1) 
+    else:
+        tracks_df['flight_id'] = tracks_df.apply(lambda row: str(row['endDate']) + str(row['callsign']), axis = 1) 
     
     tracks_df.set_index(['flight_id', 'sequence'], inplace=True)
     
@@ -219,18 +243,19 @@ def download_tracks_week(month, week, date_time_begin, date_time_end):
 
     data_retriever = LiveDataRetriever()
     
-    filename = 'osn_' + airport_icao + '_tracks_' + year + '_' + month + '_week' + str(week) + '.csv'
+    filename = airport_icao + '_tracks_' + year + '_' + month + '_week' + str(week) + '.csv'
     
-    if arrival:
-        flights = data_retriever.get_list_of_arriving_aircraft(timestamp_begin, timestamp_end)
-    else:
+    if departure:
         flights = data_retriever.get_list_of_departure_aircraft(timestamp_begin, timestamp_end)
-        filename = 'departure_' + filename
+        filename = 'osn_departure_' + filename
+    else:
+        flights = data_retriever.get_list_of_arriving_aircraft(timestamp_begin, timestamp_end)
+        filename = 'osn_arrival_' + filename
 
     if flights:
         opensky_df = get_tracks_data(data_retriever, flights, date_time_begin, date_time_end, month, week)
 
-        opensky_df = opensky_df.astype({"time": str, "date": str})
+        #opensky_df = opensky_df.astype({"time": str, "date": str})
         opensky_df.reset_index(drop=True, inplace=True)
     
         output_filename = os.path.join(OUTPUT_DIR, filename)
@@ -247,7 +272,8 @@ for month in months:
     
     procs = []
     
-    for week in range(0,4):
+    #for week in range(0,4):
+    for week in range(3,4):
 
         print(week)
     
@@ -269,10 +295,10 @@ for month in months:
     else:
         DATE_TIME_BEGIN = datetime(int(year), int(month), 29, 0, 0, 0, 0, timezone.utc)
         DATE_TIME_END = datetime(int(year), int(month) + 1, 1, 0, 0, 0, 0, timezone.utc)
-    
+    '''
     proc = Process(target=download_tracks_week, args=(month, 5, DATE_TIME_BEGIN, DATE_TIME_END,))
     procs.append(proc)
-    proc.start()
+    proc.start()'''
     
     # complete the processes
     for proc in procs:

@@ -5,7 +5,7 @@ airport_icao = "ESSA"
 #airport_icao = "EIDW" # Dublin
 #airport_icao = "LOWW" # Vienna
 
-arrival = True
+departure = True
 
 year = '2019'
 
@@ -53,10 +53,12 @@ def get_all_tracks(csv_input_file):
     return df
 
 
-# start from the last waypoint outside 50NM circle
+# departures - start from the first waypoint outside 50NM circle
+# arrivals - start from the last waypont outside 50NM circle
+
 def get_tracks_inside_50NM_circle(month, week, tracks_df, csv_output_file):
 
-    tracks_inside_50NM_circle_df = pd.DataFrame()
+    tracks_inside_50NM_df = pd.DataFrame()
 
     number_of_flights = len(tracks_df.groupby(level='flightId'))
 
@@ -64,43 +66,66 @@ def get_tracks_inside_50NM_circle(month, week, tracks_df, csv_output_file):
     for flight_id, new_df in tracks_df.groupby(level='flightId'):
         print(airport_icao, year, month, week, number_of_flights, count, flight_id)
         count = count + 1
-        entry_point_index = get_entry_point_index(flight_id, new_df)
         
-        if entry_point_index==-1:
-            print("entry point index == -1")
-            continue
+        if departure:
+            first_point_outside_50NM_index = get_first_point_outside_50NM(flight_id, new_df)
+            
+            if first_point_outside_50NM_index == -1:
+                continue
+            
+            if first_point_outside_50NM_index == 0:
+                continue
+            
+            new_df_inside_50NM = new_df.iloc[:first_point_outside_50NM_index+1].copy()
         
-        if entry_point_index !=0:
-            entry_point_index = entry_point_index -1
+        else:
+            first_point_inside_50NM_index = get_first_point_inside_50NM()
+            
+            if first_point_inside_50NM_index == -1:
+                continue
+            
+            if first_point_inside_50NM_index != 0:
+                last_point_outside_50NM_index = first_point_inside_50NM_index - 1
+            
+            new_df_inside_50NM = new_df.iloc[last_point_outside_50NM_index:].copy()
+            
+            # reassign sequence
+            new_df_inside_50NM.reset_index(drop=False, inplace=True)
+            new_df_inside_50NM_length = len(new_df_inside_50NM)
+            
+            sequence_list = list(range(new_df_inside_50NM_length))
+            
+            new_df_inside_50NM.drop(['sequence'], axis=1, inplace=True)
+            
+            new_df_inside_50NM['sequence'] = sequence_list
+            
         
-        new_df_inside_50NM_circle = new_df.iloc[entry_point_index:].copy()
+        tracks_inside_50NM_df = tracks_inside_50NM_df.append(new_df_inside_50NM)
         
-        # reassign sequence
-        new_df_inside_50NM_circle.reset_index(drop=False, inplace=True)
-        new_df_inside_50NM_circle_length = len(new_df_inside_50NM_circle)
-        
-        sequence_list = list(range(new_df_inside_50NM_circle_length))
-        
-        new_df_inside_50NM_circle.drop(['sequence'], axis=1, inplace=True)
-        
-        new_df_inside_50NM_circle['sequence'] = sequence_list
-        
-        new_df_inside_50NM_circle = new_df_inside_50NM_circle[['flightId', 'sequence', 'origin', 'endDate', 'callsign', 'icao24', 'date', 'time', 
-                                               'timestamp', 'lat', 'lon', 'baroAltitude']]
-        
-        tracks_inside_50NM_circle_df = tracks_inside_50NM_circle_df.append(new_df_inside_50NM_circle)
-        
-    tracks_inside_50NM_circle_df.to_csv(os.path.join(OUTPUT_DIR, csv_output_file), sep=' ', encoding='utf-8', float_format='%.6f', header=None, index=False)
+    tracks_inside_50NM_df.to_csv(os.path.join(OUTPUT_DIR, csv_output_file), sep=' ', encoding='utf-8', float_format='%.6f', header=None, index=True)
 
 
-def get_entry_point_index(flight_id, new_df):
+
+def get_first_point_inside_50NM(flight_id, new_df):
     
     lat = 0.0
     lon = 0.0
     for seq, row in new_df.groupby(level='sequence'):
         lat = row.loc[(flight_id, seq)]['lat']
         lon = row.loc[(flight_id, seq)]['lon']
-        if (check_50NM_circle_contains_point((row.loc[(flight_id, seq)]['lat'], row.loc[(flight_id, seq)]['lon']))):
+        if (check_50NM_circle_contains_point(Point(row.loc[(flight_id, seq)]['lon'], row.loc[(flight_id, seq)]['lat']))):
+            return seq
+    print(lat, lon)
+    return -1
+
+def get_first_point_outside_50NM(flight_id, new_df):
+    
+    lat = 0.0
+    lon = 0.0
+    for seq, row in new_df.groupby(level='sequence'):
+        lat = row.loc[(flight_id, seq)]['lat']
+        lon = row.loc[(flight_id, seq)]['lon']
+        if (not check_50NM_circle_contains_point(Point(row.loc[(flight_id, seq)]['lon'], row.loc[(flight_id, seq)]['lat']))):
             return seq
     print(lat, lon)
     return -1
@@ -140,7 +165,8 @@ for month in months:
     
     number_of_weeks = (5, 4)[month == '02' and not calendar.isleap(int(year))]
         
-    for week in range(0, number_of_weeks):
+    #for week in range(0, number_of_weeks):
+    for week in range(0, 1):
         
         proc = Process(target=extract_50NM_part, args=(month, week + 1,))
         procs.append(proc)

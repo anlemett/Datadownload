@@ -1,9 +1,11 @@
 ##############################################################################
 
-#airport_icao = "ESSA"
+airport_icao = "ESSA"
 #airport_icao = "ESGG"
 #airport_icao = "EIDW" # Dublin
-airport_icao = "LOWW" # Vienna
+#airport_icao = "LOWW" # Vienna
+
+departure = True
 
 year = '2019'
 
@@ -26,19 +28,22 @@ TMA_altitude_threshold = 9000
 # Fake levels are still possible due to fluctuation down at the first point (not filtered out).
 
 # threshold for altitude fluctuation toward bigger values
-altitude_fluctuation_threshold_up = 300 # ?
+altitude_fluctuation_threshold_up = 300
 
 # If altitude_fluctuation_threshold_up is too big a lot of fluctuations will be skiped (then vertical profile is changed greatly by 
 # smoothing procedure).
-# Too small value might cause a fake level but in very rare cases: wrong altitude for some time (the same altitude) and then the aircraft
+# Too small value might cause a fake level but in very rare cases(arrivals): wrong altitude for some time (the same altitude) and then the aircraft
 # really goes up.
 
 # threshold for altitude fluctuation toward smaller values
-altitude_fluctuation_threshold_down = 600
+if departure:
+    altitude_fluctuation_threshold_down = 300
+else:
+    altitude_fluctuation_threshold_down = 600
 
 # If altitude_fluctuation_threshold_down is too big  a lot of fluctuations will be skiped (then vertical profile is changed greatly by 
 # smoothing procedure).
-# Too small value might cause a fake level in the following cases: wrong altitude data for some time (the same altitude), then correct
+# Too small value might cause a fake level in the following cases(arrivals): wrong altitude data for some time (the same altitude), then correct
 # altitude, but the difference between this altittude and the previous correct altitude is above the fluctuation down threshold. Flights 
 # of this kind are also filtered out using the last point altitude (next step).
 
@@ -55,13 +60,11 @@ import os
 
 DATA_DIR = os.path.join("data", airport_icao)
 DATA_DIR = os.path.join(DATA_DIR, year)
-INPUT_DIR = os.path.join(DATA_DIR, "osn_" + airport_icao + "_states_TMA_raw_" + year)
-#INPUT_DIR = os.path.join(DATA_DIR, "osn_" + airport_icao + "_states_TMA_" + year)
-OUTPUT_DIR = os.path.join(DATA_DIR, "osn_" + airport_icao + "_states_TMA_" + year)
+INPUT_DIR = os.path.join(DATA_DIR, "osn_" + airport_icao + "_states_TMA_filtered_" + year)
+OUTPUT_DIR = os.path.join(DATA_DIR, "osn_" + airport_icao + "_states_TMA_smoothed_" + year)
 
 if not os.path.exists(OUTPUT_DIR):
     os.makedirs(OUTPUT_DIR)
-
 
 
 import pandas as pd
@@ -77,30 +80,27 @@ for month in months:
     
     number_of_weeks = (5, 4)[month == '02' and not calendar.isleap(int(year))]
         
-    for week in range(0, number_of_weeks):
+    #for week in range(0, number_of_weeks):
+    for week in range(0, 1):
     
         print(airport_icao, year, month, week+1)
         
-        filename = 'osn_' + airport_icao + '_states_TMA_raw_' + year + '_' + month + '_week' + str(week + 1) + '.csv'
-        #filename = 'osn_' + airport_icao + '_states_TMA_' + year + '_' + month + '_week' + str(week + 1) + '.csv'
+        filename = airport_icao + '_states_TMA_filtered_' + year + '_' + month + '_week' + str(week + 1) + '.csv'
+        
+        if departure:
+            filename = 'osn_departure_' + filename
+        else:
+            filename = 'osn_' + filename
         
         full_filename = os.path.join(INPUT_DIR, filename)
         
         
         df = pd.read_csv(full_filename, sep=' ',
-                                 names = ['flightId', 'sequence', 'timestamp', 'lat', 'lon', 'rawAltitude', 'velocity', 'endDate'],
-                                 index_col=False,
-                                 dtype={'sequence':int, 'timestamp':int, 'rawAltitude':float, 'endDate':str})
+            names = ['flightId', 'sequence', 'timestamp', 'lat', 'lon', 'rawAltitude', 'velocity', 'beginDate', 'endDate'],
+            index_col=False,
+            dtype={'sequence':int, 'timestamp':int, 'rawAltitude':int, 'beginDate':str, 'endDate':str})
         
-        #print(df.head(1))
-        
-        #df = pd.read_csv(full_filename, sep=' ',
-        #                         names = ['flightId', 'sequence', 'timestamp', 'lat', 'lon', 'rawAltitude', 'altitude', 'velocity', 'endDate'],
-        #                         index_col=False,
-        #                         dtype={'sequence':int, 'timestamp':int, 'rawAltitude':int, 'altitude':float, 'endDate':str})
-
-
-        new_df = pd.DataFrame(columns=['flightId', 'sequence', 'timestamp', 'lat', 'lon', 'rawAltitude', 'altitude', 'velocity', 'endDate'],
+        new_df = pd.DataFrame(columns=['flightId', 'sequence', 'timestamp', 'lat', 'lon', 'rawAltitude', 'altitude', 'velocity', 'beginDate', 'endDate'],
                               dtype=str)
 
         df.set_index(['flightId', 'sequence'], inplace = True)
@@ -118,7 +118,7 @@ for month in months:
             
             below_TMA_altitude_threshold_df = flight_id_group[(flight_id_group['rawAltitude'] > 0) & (flight_id_group['rawAltitude'] < TMA_altitude_threshold)]
             
-            if below_TMA_altitude_threshold_df.empty:    #flight is not landing
+            if below_TMA_altitude_threshold_df.empty:    #flight is in cruise
                 continue
             
             flight_states_df = flight_id_group.copy()
@@ -184,7 +184,7 @@ for month in months:
             
             flight_states_df = flight_states_df.reset_index(drop=False)
             
-            flight_states_df = flight_states_df[['flightId', 'sequence', 'timestamp', 'lat', 'lon', 'rawAltitude', 'altitude', 'velocity', 'endDate']]
+            flight_states_df = flight_states_df[['flightId', 'sequence', 'timestamp', 'lat', 'lon', 'rawAltitude', 'altitude', 'velocity', 'beginDate', 'endDate']]
             
             new_df = new_df.append(flight_states_df)
             
@@ -193,7 +193,12 @@ for month in months:
             #print(new_df.head(1))
         
         
-        filename = 'osn_' + airport_icao + '_states_TMA_' + year + '_' + month + '_week' + str(week + 1) + '.csv'
+        filename = airport_icao + '_states_TMA_smoothed_' + year + '_' + month + '_week' + str(week + 1) + '.csv'
+        
+        if departure:
+            filename = 'osn_departure_' + filename
+        else:
+            filename = 'osn_' + filename
         
         full_filename = os.path.join(OUTPUT_DIR, filename)
         

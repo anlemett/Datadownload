@@ -5,7 +5,7 @@ airport_icao = "ESSA"
 #airport_icao = "EIDW" # Dublin
 #airport_icao = "LOWW" # Vienna
 
-arrival = True
+departure = True
 
 year = "2019"
 
@@ -19,7 +19,7 @@ import os
 DATA_DIR = os.path.join("data", airport_icao + '_rwy')
 DATA_DIR = os.path.join(DATA_DIR, year)
 INPUT_DIR = os.path.join(DATA_DIR, "osn_" + airport_icao + "_tracks_50NM_" + year)
-OUTPUT_DIR = os.path.join(DATA_DIR, "osn_" + airport_icao + "_states_close_to_50NM_raw_" + year)
+OUTPUT_DIR = os.path.join(DATA_DIR, "osn_" + airport_icao + "_states_close_to_50NM_" + year)
 
 if not os.path.exists(INPUT_DIR):
     os.makedirs(INPUT_DIR)
@@ -183,6 +183,35 @@ def download_states_week(month, week):
     
     getShellReady(shell)
     
+    # opensky tracks csv
+    opensky_tracks_filename = airport_icao + '_tracks_50NM_' + year + '_' + month + '_week' + str(week) + '.csv'
+    if departure:
+        opensky_tracks_filename = 'osn_departure_' + opensky_tracks_filename
+    else:
+        opensky_tracks_filename = 'osn_' + opensky_tracks_filename
+
+    #opensky states close to 50NM csv
+    opensky_states_filename = airport_icao + '_states_close_to_50NM_' + year + '_' + month + '_week' + str(week) + '.csv'
+    if departure:
+        opensky_states_filename = 'osn_departure_' + opensky_states_filename
+    else:
+        opensky_states_filename = 'osn_' + opensky_states_filename
+
+    opensky_states_df = pd.DataFrame()
+
+    if departure:
+        opensky_tracks_df = pd.read_csv(os.path.join(INPUT_DIR, opensky_tracks_filename), sep=' ',
+            names=['flightId', 'sequence', 'destination', 'beginDate', 'callsign', 'icao24', 'timestamp', 'lat', 'lon', 'baroAltitude'],
+            index_col=[0,1], dtype={'flightId':str, 'sequence':int, 'icao24': str, 'timestamp':int})
+    else:
+        opensky_tracks_df = pd.read_csv(os.path.join(INPUT_DIR, opensky_tracks_filename), sep=' ',
+            names=['flightId', 'sequence', 'origin', 'endDate', 'callsign', 'icao24', 'timestamp', 'lat', 'lon', 'baroAltitude'],
+            index_col=[0,1], dtype={'flightId':str, 'sequence':int, 'icao24': str, 'timestamp':int})
+
+    
+    
+    
+    
     
     # opensky tracks csv
     opensky_tracks_filename = 'osn_' + airport_icao + '_tracks_50NM_' + year + '_' + month + '_week' + str(week) + '.csv'
@@ -192,11 +221,14 @@ def download_states_week(month, week):
 
     opensky_states_df = pd.DataFrame()
 
-    opensky_tracks_df = pd.read_csv(os.path.join(INPUT_DIR, opensky_tracks_filename), sep=' ',
-                                names=['flightId', 'sequence', 'origin', 'endDate', 'callsign', 'icao24', 'date', 'time', 'timestamp',
-                                    'lat', 'lon', 'baroAltitude'],
-                                index_col=[0,1],
-                                dtype={'flightId':str, 'sequence':int, 'icao24': str, 'timestamp':int})
+    if departure:
+        opensky_tracks_df = pd.read_csv(os.path.join(INPUT_DIR, opensky_tracks_filename), sep=' ',
+            names=['flightId', 'sequence', 'destination', 'beginDate', 'callsign', 'icao24', 'timestamp', 'lat', 'lon', 'baroAltitude'],
+            index_col=[0,1], dtype={'flightId':str, 'sequence':int, 'icao24': str, 'timestamp':int})
+    else:
+        opensky_tracks_df = pd.read_csv(os.path.join(INPUT_DIR, opensky_tracks_filename), sep=' ',
+            names=['flightId', 'sequence', 'origin', 'endDate', 'callsign', 'icao24', 'timestamp', 'lat', 'lon', 'baroAltitude'],
+            index_col=[0,1], dtype={'flightId':str, 'sequence':int, 'icao24': str, 'timestamp':int})
 
 
     number_of_flights = len(opensky_tracks_df.groupby(level='flightId'))
@@ -255,7 +287,7 @@ def download_states_week(month, week):
         new_flight_df = new_flight_df.drop(['sequence'], axis=1)
         
         new_flight_df['sequence'] = sequence_list
-
+        
         new_flight_df = new_flight_df[['sequence', 'timestamp', 'lat', 'lon', 'altitude', 'velocity', 'beginDate', 'endDate']]
         
         new_states_df = new_states_df.append(new_flight_df)
@@ -277,7 +309,8 @@ for month in months:
         
     number_of_weeks = (5, 4)[month == '02' and not calendar.isleap(int(year))]
         
-    for week in range(0, number_of_weeks):
+    #for week in range(0, number_of_weeks):
+    for week in range(0, 1):
         
         proc = Process(target=download_states_week, args=(month, week + 1,))
         procs.append(proc)
@@ -288,3 +321,4 @@ for month in months:
         proc.join()
 
 print((time.time()-start_time)/60)
+

@@ -1,9 +1,12 @@
 ##############################################################################
 
-#airport_icao = "ESSA"
+airport_icao = "ESSA"
 #airport_icao = "ESGG"
 #airport_icao = "EIDW" # Dublin
-airport_icao = "LOWW" # Vienna
+#airport_icao = "LOWW" # Vienna
+
+departure = True
+# this step might be skipped for departure
 
 year = '2019'
 
@@ -45,18 +48,24 @@ for month in months:
     number_of_weeks = (5, 4)[month == '02' and not calendar.isleap(int(year))]
     #number_of_weeks = 1
         
-    for week in range(0, number_of_weeks):
+    #for week in range(0, number_of_weeks):
+    for week in range(0, 1):
         
         print(airport_icao, year, month, week+1)
         
-        filename = 'osn_' + airport_icao + '_states_TMA_' + year + '_' + month + '_week' + str(week + 1) + '.csv'
+        filename = airport_icao + '_states_TMA_' + year + '_' + month + '_week' + str(week + 1) + '.csv'
+        
+        if departure:
+            filename = 'osn_departure_' + filename
+        else:
+            filename = 'osn_' + filename
         
         full_filename = os.path.join(INPUT_DIR, filename)
         
         
         df = pd.read_csv(full_filename, sep=' ',
-                                 names = ['flightId', 'sequence', 'timestamp', 'lat', 'lon', 'rawAltitude', 'altitude', 'velocity', 'endDate'],
-                                 dtype={'sequence':int, 'timestamp':int, 'rawAltitude':int, 'altitude':float, 'endDate':str})
+            names = ['flightId', 'sequence', 'timestamp', 'lat', 'lon', 'rawAltitude', 'altitude', 'velocity',  'beginDate', 'endDate'],
+            dtype={'sequence':int, 'timestamp':int, 'rawAltitude':int, 'altitude':int, 'beginDate':str, 'endDate':str})
 
         df.set_index(['flightId', 'sequence'], inplace = True)
 
@@ -105,7 +114,12 @@ for month in months:
                 continue
         
         
-        filename = 'osn_' + airport_icao + '_states_TMA_' + year + '_' + month + '_week' + str(week + 1) + '.csv'
+        filename = airport_icao + '_states_TMA_' + year + '_' + month + '_week' + str(week + 1) + '.csv'
+        
+        if departure:
+            filename = 'osn_departure_' + filename
+        else:
+            filename = 'osn_' + filename
 
         full_filename = os.path.join(OUTPUT_DIR, filename)
         
