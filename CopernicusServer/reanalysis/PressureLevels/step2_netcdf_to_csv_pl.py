@@ -4,12 +4,14 @@ year = 2019
 #airport_icao = 'ESSA'
 airport_icao = 'ESGG'
 
+name = '_01_06_reanalysis_pl.'
+
 
 import xarray as xr
 from math import sqrt
 import pandas as pd
 
-filename = 'data/' + airport_icao + '/' + airport_icao + '_' + str(year) + '_reanalysis.'
+filename = 'data/' + airport_icao + '/' + airport_icao + '_' + str(year) + name
 
 
 def getMonth(pandas_timestamp):
@@ -33,6 +35,12 @@ start_time = time.time()
 nc_filename = filename + 'nc'
 DS = xr.open_dataset(nc_filename)
 
+print(DS)
+#print(DS['cin'])
+#for var in DS.variables.values():
+#    print(var)
+
+
 df = DS.to_dataframe()
 
 df.reset_index(inplace=True)
@@ -48,11 +56,11 @@ df['day'] = df.apply(lambda row: getDay(row['time']), axis=1)
 
 df['hour'] = df.apply(lambda row: getHour(row['time']), axis=1)
 
-df['wind'] = df.apply(lambda row: getWind(row['u10'], row['v10']), axis=1)
+#df['wind10'] = df.apply(lambda row: getWind(row['u10'], row['v10']), axis=1)
+#df['wind100'] = df.apply(lambda row: getWind(row['u100'], row['v100']), axis=1)
 
 
-
-df = df[['month','day','hour', 'latitude', 'longitude', 'i10fg', 'wind', 'cbh', 'lcc', 'tcc', 'cape', 'cp', 'tp', 'sf', 'sd']]
+#df = df[['month','day','hour', 'latitude', 'longitude', 'i10fg', 'wind', 'cbh', 'lcc', 'tcc', 'cape', 'cp', 'tp', 'sf', 'sd']]
 
 
 df = df.sort_values(by = ['month', 'day', 'hour', 'latitude', 'longitude'], ascending = [True, True, True, True, False])

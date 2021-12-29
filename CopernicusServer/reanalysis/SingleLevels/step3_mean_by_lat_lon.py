@@ -1,13 +1,13 @@
 
 year = 2019
 
-airport_icao = 'ESSA'
-#airport_icao = 'ESGG'
+#airport_icao = 'ESSA'
+airport_icao = 'ESGG'
 
 
 import pandas as pd
 
-filename = 'data/' + airport_icao + '/' + airport_icao + '_' + str(year) + '_reanalysis.csv'
+filename = 'data/' + airport_icao + '/' + airport_icao + '_' + str(year) + '_07_12_reanalysis_cbh.csv'
 
 
 import time
@@ -47,7 +47,8 @@ print(df.head())
 #          wind10
 #          wind100
 
-df = df[['month','day','hour', 'latitude', 'longitude', 'i10fg', 'wind', 'cbh', 'lcc', 'tcc', 'cape', 'cp', 'tp', 'sf', 'sd']]
+#df = df[['month','day','hour', 'latitude', 'longitude', 'i10fg', 'wind', 'cbh', 'lcc', 'tcc', 'cape', 'cp', 'tp', 'sf', 'sd']]
+df = df[['month','day','hour', 'latitude', 'longitude', 'cbh']]
 df.set_index(['month', 'day', 'hour'], inplace=True)
 
 month = []
@@ -68,35 +69,35 @@ for idx, hour_df in df.groupby(level=[0, 1, 2]):
     month.append(idx[0])
     day.append(idx[1])
     hour.append(idx[2])
-    mean_gust.append(round(hour_df['i10fg'].mean(),3))
-    mean_wind.append(round(hour_df['wind'].mean(),3))
+    #mean_gust.append(round(hour_df['i10fg'].mean(),3))
+    #mean_wind.append(round(hour_df['wind'].mean(),3))
     mean_cbh.append(round(hour_df['cbh'].mean(),3))
-    mean_lcc.append(round(hour_df['lcc'].mean(),3))
-    mean_tcc.append(round(hour_df['tcc'].mean(),3))
-    mean_cape.append(round(hour_df['cape'].mean(),3))
-    mean_cp.append(round(hour_df['cp'].mean(),3))
-    mean_tp.append(round(hour_df['tp'].mean(),3))
-    mean_sf.append(round(hour_df['sf'].mean(),3))
-    mean_sd.append(round(hour_df['sd'].mean(),3))
+    #mean_lcc.append(round(hour_df['lcc'].mean(),3))
+    #mean_tcc.append(round(hour_df['tcc'].mean(),3))
+    #mean_cape.append(round(hour_df['cape'].mean(),3))
+    #mean_cp.append(round(hour_df['cp'].mean(),3))
+    #mean_tp.append(round(hour_df['tp'].mean(),3))
+    #mean_sf.append(round(hour_df['sf'].mean(),3))
+    #mean_sd.append(round(hour_df['sd'].mean(),3))
     
 
 mean_df = pd.DataFrame()
 mean_df['month'] = month
 mean_df['day'] = day
 mean_df['hour'] = hour
-mean_df['gust'] = mean_gust
-mean_df['wind'] = mean_wind
+#mean_df['gust'] = mean_gust
+#mean_df['wind'] = mean_wind
 mean_df['cbh'] = mean_cbh
-mean_df['lcc'] = mean_lcc
-mean_df['tcc'] = mean_tcc
-mean_df['cape'] = mean_cape
-mean_df['cp'] = mean_cp
-mean_df['tp'] = mean_tp
-mean_df['sf'] = mean_sf
-mean_df['sd'] = mean_sd
+#mean_df['lcc'] = mean_lcc
+#mean_df['tcc'] = mean_tcc
+#mean_df['cape'] = mean_cape
+#mean_df['cp'] = mean_cp
+#mean_df['tp'] = mean_tp
+#mean_df['sf'] = mean_sf
+#mean_df['sd'] = mean_sd
 
 
-filename = 'data/' + airport_icao + '/' + airport_icao + '_' + str(year) + '_mean_by_lat_lon.csv'
+filename = 'data/' + airport_icao + '/' + airport_icao + '_' + str(year) + '_cbh_mean_by_lat_lon.csv'
 mean_df.to_csv(filename, sep=' ', encoding='utf-8', float_format='%.12f', header=True, index=False)
 
 print((time.time()-start_time)/60)

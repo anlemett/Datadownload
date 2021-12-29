@@ -33,6 +33,12 @@ start_time = time.time()
 nc_filename = filename + 'nc'
 DS = xr.open_dataset(nc_filename)
 
+print(DS)
+print(DS['cin'])
+#for var in DS.variables.values():
+#    print(var)
+
+
 df = DS.to_dataframe()
 
 df.reset_index(inplace=True)
