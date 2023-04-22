@@ -1,7 +1,0 @@
-DDR_M1_PLOT_COLOR = "green"
-DDR_M3_PLOT_COLOR = "maroon"
-OPENSKY_PLOT_COLOR = "darkblue"
-TMA_COLOR = "blue"
-RWYS_COLOR = "red"
-ENTRY_POINTS_COLOR = "red"
-OPENSKY_ALTITUDES_COLOR = "darkblue"
